@@ -1,0 +1,41 @@
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex: <http://example.org/foret#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+### LE CONCEPT CENTRAL
+ex:Forest a skos:Concept ;
+    skos:prefLabel "Forêt"@fr ;
+    skos:prefLabel "Forest"@en ;
+    skos:altLabel "Bois"@fr, "Jungle"@fr ;
+    skos:definition ex:Def_FAO, ex:Def_UNFCCC .
+
+### DÉFINITION 1 : FAO (Approche Land Use/Cover)
+ex:Def_FAO a ex:Definition ;
+    rdfs:label "Définition de la forêt selon la FAO" ;
+    ex:hasSource ex:Source_FAO ;
+    ex:type "Land Use" ;
+    skos:note "Land spanning more than 0.5 hectares with trees higher than 5 meters and a canopy cover of more than 10 percent." ;
+    # Liens vers les critères techniques
+    ex:hasCriteria [
+        ex:minHeight "5.0"^^xsd:float ;
+        ex:minCanopyCover "10.0"^^xsd:float ;
+        ex:minArea "0.5"^^xsd:float 
+    ] .
+
+### DÉFINITION 2 : UNFCCC (Kyoto Protocol)
+ex:Def_UNFCCC a ex:Definition ;
+    rdfs:label "Définition de la forêt selon l'UNFCCC" ;
+    ex:hasSource ex:Source_UNFCCC ;
+    ex:type "Flexible Threshold" ;
+    skos:note "A minimum area of land of 0.05-1.0 hectares with tree crown cover of more than 10-30 per cent and tree height of 2-5 meters." .
+
+### LES SOURCES
+ex:Source_FAO a ex:Source ;
+    ex:orgName "Food and Agriculture Organization" ;
+    ex:url "http://www.fao.org/forestry" .
+
+ex:Source_UNFCCC a ex:Source ;
+    ex:orgName "UNFCCC" ;
+    ex:year "1997"^^xsd:gYear .
