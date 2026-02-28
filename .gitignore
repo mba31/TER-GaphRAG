@@ -1,0 +1,12 @@
+# macOS
+.DS_Store
+
+# Neo4j runtime
+logs/
+data/
+metrics/
+
+# Python (si futur RAG)
+__pycache__/
+*.pyc
+.env
