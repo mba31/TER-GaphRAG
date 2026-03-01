@@ -3,22 +3,35 @@
 ```mermaid
 classDiagram
     class Concept {
-        +String prefLabel
-        +String altLabel
+        + prefLabel : String
+        + altLabel : String
     }
     class Definition {
-        +String text
-        +String typeInterpretation
+        + text String
+        + definitionType : DefinitionCategory
     }
     class Source {
-        +String organization
-        +Integer year
+        + organization : String
+        + year : Integer
     }
     class TechnicalCriteria {
-        +Float minHeight
-        +Float minCanopyCover
+        + criterionName : String
+        + value : Float
+        + unit : String
     }
 
-    Concept "1" -- "0..*" Definition : has definition
+    class DefinitionCategory {
+    <<enumeration>>
+    ADMINISTRATIVE
+    LAND_COVER
+    LAND_USE
+    ECOLOGICAL
+}
+
+    Concept "1" -- "1..*" Definition : has definition
+
+    Concept "0..*" -- "0..*" Concept : broader/narrower
+    
     Definition "1" -- "1" Source : provided by
-    Definition "0..1" -- "0..*" TechnicalCriteria : quantified by
+    
+    Definition "1..*" -- "0..*" TechnicalCriteria : quantified by
