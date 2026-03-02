@@ -63,15 +63,22 @@ Document (DOCX)
 ## Quick Start
 
 ```bash
+# 0. Verify setup (first time only)
+python tools/check_setup.py
+
 # 1. Install dependencies
 pip install -r requirements.txt
 
-# 2. Run full pipeline
+# 2. Run pipeline
 python scripts/extract_definitions.py
 python scripts/csv_to_rdf.py
 python scripts/rdf_to_neo4j.py --clear-db
 
-# 3. Open Neo4j Browser
+# 3. Verify with tests
+python tests/test_constraints.py
+python tests/test_idempotency.py
+
+# 4. Open Neo4j Browser
 # http://localhost:7474
 # Run: MATCH (c:Concept)-[:HAS_DEFINITION]->(d:Definition) RETURN c, d LIMIT 10
 ```
@@ -98,22 +105,34 @@ python scripts/rdf_to_neo4j.py
 
 ```
 TER2026/
-├── docs/                    # Documentation (START HERE)
-│   ├── INDEX.md            # Navigation guide
-│   ├── QUICKSTART.md       # 5-minute setup
-│   ├── DEPLOYMENT.md       # Production guide
-│   ├── ENHANCEMENTS.md     # Features & improvements
-│   └── QUERIES.md          # Neo4j query examples
-├── scripts/
-│   ├── extract_definitions.py    # Extract DOCX → CSV
-│   ├── csv_to_rdf.py             # CSV → RDF
-│   ├── rdf_to_neo4j.py           # RDF → Neo4j
-│   └── config.py                 # Centralized config
-├── csv/                    # Extracted definitions
-├── data/                   # RDF/Turtle files
-├── logs/                   # Audit & error logs
-├── diagrams/               # Visualizations
-└── README.md              # You are here
+├── config.py                        # Centralized configuration
+├── requirements.txt                 # Python dependencies
+├── README.md                        # You are here
+│
+├── docs/                            # Documentation (START HERE)
+│   ├── INDEX.md                    # Navigation guide
+│   ├── QUICKSTART.md               # 5-minute setup
+│   ├── DEPLOYMENT.md               # Production guide
+│   ├── ENHANCEMENTS.md             # Features & improvements
+│   └── QUERIES.md                  # Neo4j query examples
+│
+├── scripts/                         # Main pipeline scripts
+│   ├── extract_definitions.py      # Extract DOCX → CSV (with audit logging)
+│   ├── csv_to_rdf.py               # CSV → RDF/Turtle (SKOS ontology)
+│   └── rdf_to_neo4j.py             # RDF → Neo4j (with constraints)
+│
+├── tests/                           # Verification & testing scripts
+│   ├── test_constraints.py         # Verify constraints exist
+│   └── test_idempotency.py         # Test duplicate prevention
+│
+├── tools/                           # Maintenance utilities
+│   └── check_setup.py              # Pre-flight verification
+│
+├── csv/                             # Extracted definitions (generated)
+├── data/                            # RDF/Turtle files (generated)
+├── logs/                            # Audit & error logs (generated)
+├── diagrams/                        # Visualizations
+└── outputs/                         # Generated outputs
 ```
 
 ## Features Implemented
