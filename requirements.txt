@@ -1,0 +1,19 @@
+# TER2026 - Forest Definitions Knowledge Graph
+# Python Dependencies
+
+# Document processing
+python-docx>=0.8.11
+
+# RDF and semantic web
+rdflib>=6.0.0
+
+# Neo4j graph database
+neo4j>=5.0.0
+
+# Data processing
+pandas>=1.5.0
+
+# Optional: for RAG and LLM integration
+# langchain>=0.1.0
+# openai>=1.0.0
+# chromadb>=0.4.0

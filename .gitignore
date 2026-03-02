@@ -3,10 +3,44 @@
 
 # Neo4j runtime
 logs/
-data/
 metrics/
 
-# Python (si futur RAG)
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
 .env
+.venv
+venv/
+ENV/
+env/
+
+# Project-specific
+# Keep data/ for RDF files but ignore large files
+data/*.db
+data/*.log
+
+# Outputs
+outputs/*.log
+outputs/*.json
+
+# Source documents (may be large)
+docs/sources/*.pdf
+docs/sources/*.doc
+
+# CSV files (can be regenerated)
+# Comment out if you want to track them:
+# csv/*.csv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+Desktop.ini
