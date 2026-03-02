@@ -75,7 +75,7 @@ python scripts/csv_to_rdf.py
 python scripts/rdf_to_neo4j.py --clear-db
 
 # 3. Verify with tests
-python tests/test_constraints.py
+python tests/check_constraints.py
 python tests/test_idempotency.py
 
 # 4. Open Neo4j Browser

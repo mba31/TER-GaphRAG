@@ -3,6 +3,11 @@
 
 import subprocess
 import sys
+from pathlib import Path
+
+# Add parent directory to path for config import
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from neo4j import GraphDatabase
 import config
 
