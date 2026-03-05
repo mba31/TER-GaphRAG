@@ -18,8 +18,11 @@ Date: March 2026
 import re
 import csv
 import logging
+import argparse
+from datetime import datetime
 from docx import Document
 from pathlib import Path
+from types import SimpleNamespace
 import sys
 
 # Add parent directory to path to import config
@@ -30,7 +33,7 @@ import config
 class ForestDefinitionExtractor:
     """Extracts and structures forest definitions from documents."""
     
-    def __init__(self, doc_path):
+    def __init__(self, doc_path, use_docling=False):
         """
         Initialize extractor with document path.
         
@@ -38,7 +41,8 @@ class ForestDefinitionExtractor:
             doc_path: Path to the DOCX file containing definitions
         """
         self.doc_path = doc_path
-        self.doc = Document(doc_path)
+        self.use_docling = use_docling
+        self.doc = self._load_document(doc_path)
         
         # Initialize audit loggers
         self.setup_audit_logging()
@@ -95,6 +99,34 @@ class ForestDefinitionExtractor:
         
         # Storage for extracted definitions
         self.definitions = []
+
+        # Storage for unresolved paragraphs to be processed by LLM fallback
+        self.llm_queue = []
+        self._llm_queue_keys = set()
+
+    def _load_document(self, doc_path):
+        """Load document paragraphs from DOCX or via Docling."""
+        if not self.use_docling:
+            return Document(doc_path)
+
+        try:
+            from docling.document_converter import DocumentConverter
+        except Exception as err:
+            raise RuntimeError(
+                "Docling is not installed. Install with: pip install docling"
+            ) from err
+
+        converter = DocumentConverter()
+        result = converter.convert(str(doc_path))
+
+        markdown_text = result.document.export_to_markdown()
+        paragraphs = [
+            SimpleNamespace(text=line.strip())
+            for line in markdown_text.splitlines()
+            if line.strip()
+        ]
+
+        return SimpleNamespace(paragraphs=paragraphs)
     
     def extract_year(self, text):
         """
@@ -170,6 +202,24 @@ class ForestDefinitionExtractor:
                 excerpt_short = excerpt[:80].replace('\n', ' ')
                 msg += f" | '{excerpt_short}...'"
             self.error_logger.warning(msg)
+
+    def queue_paragraph_for_llm(self, para_num, concept, text, reason):
+        """Queue unresolved paragraph for optional LLM fallback processing."""
+        if not config.ENABLE_LLM_FALLBACK_QUEUE:
+            return
+
+        queue_key = (para_num, concept.lower(), reason)
+        if queue_key in self._llm_queue_keys:
+            return
+
+        self._llm_queue_keys.add(queue_key)
+        self.llm_queue.append({
+            'queued_at': datetime.utcnow().isoformat(timespec='seconds') + 'Z',
+            'paragraph_id': para_num,
+            'concept': concept,
+            'reason': reason,
+            'text': text
+        })
 
     def detect_country(self, text):
         """Detect country using explicit aliases and known country list."""
@@ -587,45 +637,75 @@ class ForestDefinitionExtractor:
             
             if not has_definition_keyword:
                 self.audit_paragraph(para_idx, text, "SKIP", "No definition keywords")
+                self.queue_paragraph_for_llm(para_idx, concept, text, "no_definition_keywords")
                 self.stats['skipped_paragraphs'] += 1
                 continue
             
-            # Extract source metadata (parenthetical source tag has priority)
-            tag_country, tag_organization = self.parse_parenthetical_source_tag(text)
-            detected_country = tag_country or self.detect_country(text)
-            detected_organization = tag_organization or self.detect_organization(text)
-            
-            # Extract metadata
-            year = self.extract_year(text)
-            criteria = self.extract_criteria(text)
-            def_type = self.determine_definition_type(text)
-            geographic_scope = self.detect_geographic_scope(text, detected_organization)
-            
-            definition = {
-                'concept': concept.capitalize(),
-                'country': detected_country or 'Unknown',
-                'organization': detected_organization or 'Unknown',
-                'year': year,
-                'definition_type': def_type,
-                'geographic_scope': geographic_scope,
-                'text': text,
-                'criteria': criteria
-            }
-            
-            definitions.append(definition)
-            self.stats['definitions_extracted'] += 1
-            
-            # Log successful extraction
-            details = f"Country: {detected_country or 'Unknown'} | Org: {detected_organization or 'Unknown'}"
-            self.audit_paragraph(para_idx, text, "EXTRACTED", details)
+            try:
+                # Extract source metadata (parenthetical source tag has priority)
+                tag_country, tag_organization = self.parse_parenthetical_source_tag(text)
+                detected_country = tag_country or self.detect_country(text)
+                detected_organization = tag_organization or self.detect_organization(text)
+
+                # Extract metadata
+                year = self.extract_year(text)
+                criteria = self.extract_criteria(text)
+                def_type = self.determine_definition_type(text)
+                geographic_scope = self.detect_geographic_scope(text, detected_organization)
+
+                definition = {
+                    'concept': concept.capitalize(),
+                    'country': detected_country or 'Unknown',
+                    'organization': detected_organization or 'Unknown',
+                    'year': year,
+                    'definition_type': def_type,
+                    'geographic_scope': geographic_scope,
+                    'text': text,
+                    'criteria': criteria
+                }
+
+                definitions.append(definition)
+                self.stats['definitions_extracted'] += 1
+
+                # Log successful extraction
+                details = f"Country: {detected_country or 'Unknown'} | Org: {detected_organization or 'Unknown'}"
+                self.audit_paragraph(para_idx, text, "EXTRACTED", details)
+            except Exception as err:
+                self.stats['extraction_errors'] += 1
+                self.audit_error(para_idx, f"Extraction error: {err}", text)
+                self.queue_paragraph_for_llm(para_idx, concept, text, "regex_extraction_error")
         
         print(f"[OK] Found {len(definitions)} {concept} definitions")
         print(f"[*] Extraction summary:")
         print(f"    - Paragraphs processed: {self.stats['paragraphs_processed']}")
         print(f"    - Definitions extracted: {self.stats['definitions_extracted']}")
         print(f"    - Paragraphs skipped: {self.stats['skipped_paragraphs']}")
+        if config.ENABLE_LLM_FALLBACK_QUEUE:
+            print(f"    - Queued for LLM fallback: {len(self.llm_queue)}")
         
         return definitions
+
+    def export_llm_queue(self, queue_file=None):
+        """Export unresolved paragraphs for second-pass LLM extraction."""
+        if not config.ENABLE_LLM_FALLBACK_QUEUE:
+            return
+
+        queue_path = Path(queue_file) if queue_file else config.QUEUE_FOR_LLM_CSV
+        queue_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with open(queue_path, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow(['queued_at', 'paragraph_id', 'concept', 'reason', 'text'])
+            for item in self.llm_queue:
+                writer.writerow([
+                    item['queued_at'],
+                    item['paragraph_id'],
+                    item['concept'],
+                    item['reason'],
+                    item['text']
+                ])
+
+        print(f"[OK] Exported LLM queue to {queue_path} ({len(self.llm_queue)} rows)")
     
     def export_to_csv(self, definitions, output_dir="csv"):
         """
@@ -703,9 +783,21 @@ class ForestDefinitionExtractor:
 
 def main():
     """Main execution function."""
+    parser = argparse.ArgumentParser(description="Extract forest definitions from source documents")
+    parser.add_argument(
+        "--doc-path",
+        default="docs/sources/forest_definitions.docx",
+        help="Path to input document",
+    )
+    parser.add_argument(
+        "--use-docling",
+        action="store_true",
+        help="Use Docling for document parsing (supports PDF and more formats)",
+    )
+    args = parser.parse_args()
     
     # Configuration
-    DOC_PATH = "docs/sources/forest_definitions.docx"  # Update with your file path
+    DOC_PATH = args.doc_path
     OUTPUT_DIR = "csv"
     CONCEPTS = [
         "forest", "deforestation", "afforestation", "reforestation", "tree",
@@ -727,7 +819,7 @@ def main():
         return
     
     # Initialize extractor
-    extractor = ForestDefinitionExtractor(DOC_PATH)
+    extractor = ForestDefinitionExtractor(DOC_PATH, use_docling=args.use_docling)
     
     # Extract definitions for each concept
     all_definitions = []
@@ -741,6 +833,7 @@ def main():
         print(f"[*] Total definitions extracted: {len(all_definitions)}")
         print()
         extractor.export_to_csv(all_definitions, OUTPUT_DIR)
+        extractor.export_llm_queue()
         print()
         print("[OK] Extraction complete!")
         print(f"[*] Check {OUTPUT_DIR}/ for output files")

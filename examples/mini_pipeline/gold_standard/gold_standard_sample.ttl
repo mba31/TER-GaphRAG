@@ -1,0 +1,38 @@
+@prefix ex: <http://example.org/forest/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:def_brazil_2015_001 a skos:Concept ;
+  skos:prefLabel "Forest definition (Brazil, 2015)"@en ;
+  skos:definition "Land spanning more than 0.5 ha with trees higher than 5 m and canopy cover above 10%."@en ;
+  dct:source "FAO FRA 2015" ;
+  ex:country "Brazil" ;
+  ex:year "2015" ;
+  ex:canopyMinPct "10"^^xsd:decimal ;
+  ex:areaMinHa "0.5"^^xsd:decimal ;
+  ex:heightMinM "5"^^xsd:decimal ;
+  ex:reviewStatus "approved" .
+
+ex:def_india_2000_001 a skos:Concept ;
+  skos:prefLabel "Forest definition (India, 2000)"@en ;
+  skos:definition "Land area 0.05–1.0 ha, tree crown cover 10–30%, trees reaching 2–5 m at maturity."@en ;
+  dct:source "UNFCCC 2000" ;
+  ex:country "India" ;
+  ex:year "2000" ;
+  ex:canopyMinPct "10"^^xsd:decimal ;
+  ex:canopyMaxPct "30"^^xsd:decimal ;
+  ex:areaMinHa "0.05"^^xsd:decimal ;
+  ex:areaMaxHa "1.0"^^xsd:decimal ;
+  ex:heightMinM "2"^^xsd:decimal ;
+  ex:heightMaxM "5"^^xsd:decimal ;
+  ex:reviewStatus "needs_review" .
+
+ex:def_germany_2010_001 a skos:Concept ;
+  skos:prefLabel "Forest definition (Germany, 2010)"@en ;
+  skos:definition "Forest land excluding agricultural tree crops, intended for long-term tree cover."@en ;
+  dct:source "National 2010" ;
+  ex:country "Germany" ;
+  ex:year "2010" ;
+  ex:excludesAgriTreeCrops "true"^^xsd:boolean ;
+  ex:reviewStatus "approved" .

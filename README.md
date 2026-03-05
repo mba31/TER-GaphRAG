@@ -21,9 +21,10 @@
 
 A Python pipeline that:
 1. **Extracts** forest definitions from documents (DOCX → CSV)
-2. **Structures** them as RDF/SKOS knowledge graph
-3. **Stores** in Neo4j for GraphRAG integration
-4. **Tracks** everything with audit logging for compliance
+2. **Queues unresolved paragraphs** for optional LLM fallback
+3. **Structures** them as RDF/SKOS knowledge graph
+4. **Stores** in Neo4j for GraphRAG integration
+5. **Tracks** everything with audit logging for compliance
 
 ## Key Features
 
@@ -51,7 +52,9 @@ A Python pipeline that:
 ```
 Document (DOCX)
      ↓ extract_definitions.py
-   CSV (structured data)
+   CSV (structured data) + queue_for_llm.csv
+     ↓ extraction_fallback.py (optional, queued rows only)
+LLM fallback results (structured CSV)
      ↓ csv_to_rdf.py
  RDF/Turtle (SKOS ontology)
      ↓ rdf_to_neo4j.py
@@ -71,6 +74,11 @@ pip install -r requirements.txt
 
 # 2. Run pipeline
 python scripts/extract_definitions.py
+python scripts/extraction_fallback.py --dry-run   # optional second pass
+# or local LLM fallback (offline via Ollama)
+# ollama serve
+# ollama pull llama3.1:8b
+# python scripts/extraction_fallback.py --provider ollama --model llama3.1:8b
 python scripts/csv_to_rdf.py
 python scripts/rdf_to_neo4j.py --clear-db
 

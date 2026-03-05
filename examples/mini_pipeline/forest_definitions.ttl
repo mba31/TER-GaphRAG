@@ -1,0 +1,29 @@
+@prefix ex: <http://ter2026.org/forest#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:def_brazil_2015_001 a skos:Concept ;
+    ex:country "Brazil" ;
+    ex:year 2015 ;
+    rdfs:comment "Source: FAO" ;
+    skos:definition "Forest - Land spanning more than 0.5 hectares with trees higher than 5 metres and a canopy cover of more than 10 percent" ;
+    skos:notation "def_brazil_2015_001" ;
+    skos:prefLabel "forest" .
+
+ex:def_germany_2010_001 a skos:Concept ;
+    ex:country "Germany" ;
+    ex:year 2010 ;
+    rdfs:comment "Source: National" ;
+    skos:definition "Forest - An area of land with forest vegetation where forest area is minimum 1 hectare and tree crown coverage is not less than 10 percent" ;
+    skos:notation "def_germany_2010_001" ;
+    skos:prefLabel "forest" .
+
+ex:def_india_2000_001 a skos:Concept ;
+    ex:country "India" ;
+    ex:year 2000 ;
+    rdfs:comment "Source: UNFCCC" ;
+    skos:definition "Forest - A contiguous area of land with more than 60 percent crown cover of trees, able to reach a height of 5 meters at maturity" ;
+    skos:notation "def_india_2000_001" ;
+    skos:prefLabel "forest" .
+

@@ -1,0 +1,4 @@
+paragraph_id,concept,queue_reason,status,definition_text,country,organization,year,definition_type,geographic_scope,min_area,min_canopy_cover,min_height,min_width,confidence,extraction_notes,error,raw_text
+2,forest,no_definition_keywords,error,,,,,,,,,,,,,pydantic package is missing. Install dependencies with: pip install -r requirements.txt,"H. Gyde Lund (coordinator) 
+Forest Information Services 
+Email: gyde@comcast.net"
