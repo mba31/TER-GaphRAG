@@ -105,10 +105,10 @@ ERROR_LOG = OUTPUTS_DIR / "extraction_errors.log"  # Tracks failures and skips
 ENABLE_AUDIT_LOG = True  # Enable audit trail for data validation
 ENABLE_ERROR_LOG = True  # Enable error tracking
 
-# LLM fallback queue (hybrid extraction mode)
-ENABLE_LLM_FALLBACK_QUEUE = True
-QUEUE_FOR_LLM_CSV = OUTPUTS_DIR / "queue_for_llm.csv"
-LLM_FALLBACK_RESULTS_CSV = OUTPUTS_DIR / "llm_fallback_results.csv"
+# LLM fallback queue (hybrid extraction mode) - DISABLED to save resources
+ENABLE_LLM_FALLBACK_QUEUE = False
+# QUEUE_FOR_LLM_CSV = OUTPUTS_DIR / "queue_for_llm.csv"
+# LLM_FALLBACK_RESULTS_CSV = OUTPUTS_DIR / "llm_fallback_results.csv"
 
 # ==================
 # Advanced Settings
