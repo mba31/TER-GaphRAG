@@ -1,4 +1,0 @@
-id,concept,source,year,country,definition,canopy_min_pct,canopy_max_pct,area_min_ha,area_max_ha,height_min_m,height_max_m,includes_plantations,excludes_agri_tree_crops,notes,reviewer,review_status
-def_brazil_2015_001,forest,FAO FRA 2015,2015,Brazil,"Land spanning more than 0.5 ha with trees higher than 5 m and canopy cover above 10%.",10,,0.5,,5,,unknown,unknown,"Reference-style numeric thresholds present",team_member_1,approved
-def_india_2000_001,forest,UNFCCC 2000,2000,India,"Land area 0.05–1.0 ha, tree crown cover 10–30%, trees reaching 2–5 m at maturity.",10,30,0.05,1.0,2,5,unknown,unknown,"Ranges are policy-dependent; verify exact national interpretation",team_member_2,needs_review
-def_germany_2010_001,forest,National 2010,2010,Germany,"Forest land excluding agricultural tree crops, intended for long-term tree cover.",NA,NA,NA,NA,NA,NA,unknown,yes,"No explicit numeric thresholds in source excerpt",team_member_3,approved

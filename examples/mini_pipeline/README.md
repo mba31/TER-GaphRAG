@@ -1,20 +1,17 @@
 # Mini Pipeline - Learning by Example
 
-**But**: Apprendre les 3 étapes clés : extraction → CSV → RDF graph
+**Objectif**: Learn the complete extraction → RDF pipeline in 3 simple steps.
 
 ## Structure
 
 ```
 mini_pipeline/
-├── 1_sample_data.csv          # Données d'entrée (simple)
-├── 2_extract.py               # Extraction basique (regex)
-├── 2_extract_nlp.py           # Extraction NLP (dateutil)
-├── 2_extract_llm.py           # Extraction LLM (Ollama/OpenAI)
-├── 2_extract_ml.py            # Extraction ML (scikit-learn)
-├── 2_extract_hybrid.py        # Hybrid: regex → NLP → LLM
-├── 3_to_rdf.py                # Conversion CSV → RDF
-├── ALL_VARIANTS.md            # Tous les variants + commandes
-└── README.md                  # Ce fichier
+├── 1_sample_data.csv         # Input: 3 sample forest definitions
+├── 2_extract.py              # Step 1: Extract (regex-based)
+├── 3_to_rdf.py               # Step 2: Convert to RDF/Turtle
+├── extracted_definitions.csv # Output from 2_extract.py
+├── forest_definitions.ttl    # Output from 3_to_rdf.py
+└── README.md                 # This file
 ```
 
 ## Exécution pas à pas
@@ -25,39 +22,10 @@ cat 1_sample_data.csv
 ```
 
 ### Étape 2: Extraire et nettoyer
-
-**Approach 1 - Regex (rapide, patterns rigides):**
 ```bash
 python 2_extract.py
 ```
 Génère `extracted_definitions.csv`
-
-**Approach 2 - NLP (flexibilité, dateutil):**
-```bash
-python 2_extract_nlp.py
-```
-Génère `extracted_definitions_nlp.csv` (même résultat, méthode différente)
-
-**Approach 3 - LLM (flexible, local ou API):**
-```bash
-python 2_extract_llm.py --provider ollama --model llama3.1:8b
-```
-Génère `extracted_definitions_llm.csv`
-
-**Approach 4 - ML (classifieur supervisé):**
-```bash
-python 2_extract_ml.py
-```
-Génère `extracted_definitions_ml.csv`
-
-**Approach 5 - Hybrid (production pattern):**
-```bash
-python 2_extract_hybrid.py --model llama3.1:8b
-```
-Génère `extracted_definitions_hybrid.csv`
-
-Voir `EXTRACTION_METHODS.md` pour la comparaison complète.
-Voir `ALL_VARIANTS.md` pour les commandes rapides.
 
 ### Étape 3: Créer le graphe RDF
 ```bash
@@ -70,46 +38,22 @@ Génère `forest_definitions.ttl`
 cat forest_definitions.ttl
 ```
 
-## Données d'exemple
+## What You Learn
 
-Le fichier `1_sample_data.csv` contient 3 définitions forestières simples:
-- Pays
-- Année
-- Définition brute
+1. **Extraction**: Regex-based extraction from CSV
+2. **Structure**: CSV → Python dictionaries → RDF graph
+3. **RDF/SKOS**: Convert to semantic web format (Turtle)
 
-## Étape 5 (optionnel): Benchmark & Contrôle de Qualité
+## Output Files
 
-Comparer vos extractions automatisées avec un "gold standard" manuel:
+After running the pipeline:
+- `extracted_definitions.csv` - Extracted and cleaned definitions
+- `forest_definitions.ttl` - RDF/Turtle knowledge graph (readable in any text editor)
 
-```bash
-# Benchmark regex extraction
-python compare_to_gold.py --automated extracted_definitions.csv
+## Next Steps (on the full project)
 
-# Benchmark NLP extraction
-python compare_to_gold.py --automated extracted_definitions_nlp.csv --gold_standard gold_standard/gold_standard_template.csv
-```
+- Scale to full document (1,859+ definitions)
+- Add LLM extraction for complex cases
+- Import into Neo4j or Virtuoso graph database
+- Link to ENVO ontology for standardized terms
 
-Voir `gold_standard/README.md` pour créer vos propres exemples de référence.
-
-## Ce qu'on apprend
-
-1. **Extraction**: 5 variantes (Regex, NLP, LLM, ML, Hybrid)
-2. **Méthodes**: Quand utiliser chaque approche (voir `EXTRACTION_METHODS.md`)
-3. **Structure**: CSV → dictionnaire Python → RDF graph
-4. **Sérialisation**: RDF/Turtle pour un knowledge graph SKOS-compliant
-5. **Validation**: Benchmark d'extraction contre un gold standard manual (voir `gold_standard/`)
-
-## Fichiers téléchargeable
-
-- Vérifier `extracted_definitions.csv` après étape 2 (Regex)
-- Vérifier `extracted_definitions_nlp.csv` (NLP)
-- Vérifier `extracted_definitions_llm.csv` (LLM)
-- Vérifier `extracted_definitions_ml.csv` (ML)
-- Vérifier `extracted_definitions_hybrid.csv` (Hybrid)
-- Vérifier `forest_definitions.ttl` après étape 3 (ouvrable dans n'importe quel éditeur)
-
-## Prochaines étapes (sur le projet complet)
-
-- Ajouter plus de champs (organisation, critères)
-- Utiliser LLM pour cas complexes
-- Importer en Neo4j ou Virtuoso

@@ -1,4 +1,0 @@
-id,concept,source,year,country,definition,extraction_method
-def_brazil_2015_001,forest,FAO,2015,Brazil,Forest - Land spanning more than 0.5 hectares with trees higher than 5 metres and a canopy cover of more than 10 percent,HYBRID_REGEX
-def_india_2000_001,forest,UNFCCC,2000,India,"Forest - A contiguous area of land with more than 60 percent crown cover of trees, able to reach a height of 5 meters at maturity",HYBRID_REGEX
-def_germany_2010_001,forest,National,2010,Germany,Forest - An area of land with forest vegetation where forest area is minimum 1 hectare and tree crown coverage is not less than 10 percent,HYBRID_REGEX

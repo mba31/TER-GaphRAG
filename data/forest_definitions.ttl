@@ -2,8 +2,10 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix envo: <http://purl.obolibrary.org/obo/ENVO_> .
 
 ex:Afforestation a skos:Concept ;
+    skos:exactMatch envo:00000066 ;
     ex:affects ex:Forest ;
     skos:definition ex:Def_def_bul_unknown_745,
         ex:Def_def_can_unknown_737,

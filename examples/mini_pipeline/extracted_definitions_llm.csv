@@ -1,2 +1,0 @@
-id,concept,source,year,country,definition,extraction_method,confidence
-def_brazil_2015_001,forest,FAO,2015,Brazil,Forest - Land spanning more than 0.5 hectares with trees higher than 5 metres and a canopy cover of more than 10 percent,LLM_FAILED_FALLBACK,0.0
