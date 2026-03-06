@@ -13,9 +13,7 @@ neo4j>=5.0.0
 # Data processing
 pandas>=1.5.0
 
-# Structured extraction / fallback pipeline
-pydantic>=2.6.0
-openai>=1.0.0
+# Optional: Docling for PDF support
 docling>=2.0.0
 
 # Optional: advanced integrations

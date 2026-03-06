@@ -100,10 +100,6 @@ class ForestDefinitionExtractor:
         # Storage for extracted definitions
         self.definitions = []
 
-        # Storage for unresolved paragraphs to be processed by LLM fallback
-        self.llm_queue = []
-        self._llm_queue_keys = set()
-
     def _load_document(self, doc_path):
         """Load document paragraphs from DOCX or via Docling."""
         if not self.use_docling:
@@ -203,23 +199,7 @@ class ForestDefinitionExtractor:
                 msg += f" | '{excerpt_short}...'"
             self.error_logger.warning(msg)
 
-    def queue_paragraph_for_llm(self, para_num, concept, text, reason):
-        """Queue unresolved paragraph for optional LLM fallback processing."""
-        if not config.ENABLE_LLM_FALLBACK_QUEUE:
-            return
 
-        queue_key = (para_num, concept.lower(), reason)
-        if queue_key in self._llm_queue_keys:
-            return
-
-        self._llm_queue_keys.add(queue_key)
-        self.llm_queue.append({
-            'queued_at': datetime.utcnow().isoformat(timespec='seconds') + 'Z',
-            'paragraph_id': para_num,
-            'concept': concept,
-            'reason': reason,
-            'text': text
-        })
 
     def detect_country(self, text):
         """Detect country using explicit aliases and known country list."""
@@ -637,7 +617,6 @@ class ForestDefinitionExtractor:
             
             if not has_definition_keyword:
                 self.audit_paragraph(para_idx, text, "SKIP", "No definition keywords")
-                self.queue_paragraph_for_llm(para_idx, concept, text, "no_definition_keywords")
                 self.stats['skipped_paragraphs'] += 1
                 continue
             
@@ -673,40 +652,15 @@ class ForestDefinitionExtractor:
             except Exception as err:
                 self.stats['extraction_errors'] += 1
                 self.audit_error(para_idx, f"Extraction error: {err}", text)
-                self.queue_paragraph_for_llm(para_idx, concept, text, "regex_extraction_error")
         
         print(f"[OK] Found {len(definitions)} {concept} definitions")
         print(f"[*] Extraction summary:")
         print(f"    - Paragraphs processed: {self.stats['paragraphs_processed']}")
         print(f"    - Definitions extracted: {self.stats['definitions_extracted']}")
         print(f"    - Paragraphs skipped: {self.stats['skipped_paragraphs']}")
-        if config.ENABLE_LLM_FALLBACK_QUEUE:
-            print(f"    - Queued for LLM fallback: {len(self.llm_queue)}")
         
         return definitions
 
-    def export_llm_queue(self, queue_file=None):
-        """Export unresolved paragraphs for second-pass LLM extraction."""
-        if not config.ENABLE_LLM_FALLBACK_QUEUE:
-            return
-
-        queue_path = Path(queue_file) if queue_file else config.QUEUE_FOR_LLM_CSV
-        queue_path.parent.mkdir(parents=True, exist_ok=True)
-
-        with open(queue_path, 'w', newline='', encoding='utf-8') as f:
-            writer = csv.writer(f)
-            writer.writerow(['queued_at', 'paragraph_id', 'concept', 'reason', 'text'])
-            for item in self.llm_queue:
-                writer.writerow([
-                    item['queued_at'],
-                    item['paragraph_id'],
-                    item['concept'],
-                    item['reason'],
-                    item['text']
-                ])
-
-        print(f"[OK] Exported LLM queue to {queue_path} ({len(self.llm_queue)} rows)")
-    
     def export_to_csv(self, definitions, output_dir="csv"):
         """
         Export definitions to CSV files (criteria.csv and definition.csv).
@@ -833,7 +787,6 @@ def main():
         print(f"[*] Total definitions extracted: {len(all_definitions)}")
         print()
         extractor.export_to_csv(all_definitions, OUTPUT_DIR)
-        extractor.export_llm_queue()
         print()
         print("[OK] Extraction complete!")
         print(f"[*] Check {OUTPUT_DIR}/ for output files")
