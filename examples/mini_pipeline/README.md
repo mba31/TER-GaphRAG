@@ -1,17 +1,17 @@
-# Mini Pipeline - Learning by Example
+# Mini Pipeline - Apprendre par l'Exemple
 
-**Objectif**: Learn the complete extraction → RDF pipeline in 3 simple steps.
+**Objectif**: Apprendre le pipeline complet d'extraction → RDF en 3 étapes simples.
 
 ## Structure
 
 ```
 mini_pipeline/
-├── 1_sample_data.csv         # Input: 3 sample forest definitions
-├── 2_extract.py              # Step 1: Extract (regex-based)
-├── 3_to_rdf.py               # Step 2: Convert to RDF/Turtle
-├── extracted_definitions.csv # Output from 2_extract.py
-├── forest_definitions.ttl    # Output from 3_to_rdf.py
-└── README.md                 # This file
+├── 1_sample_data.csv         # Entrée: 3 exemples de définitions forestières
+├── 2_extract.py              # Étape 1: Extraction (basée sur regex)
+├── 3_to_rdf.py               # Étape 2: Conversion en RDF/Turtle
+├── extracted_definitions.csv # Sortie de 2_extract.py
+├── forest_definitions.ttl    # Sortie de 3_to_rdf.py
+└── README.md                 # Ce fichier
 ```
 
 ## Exécution pas à pas
@@ -38,22 +38,23 @@ Génère `forest_definitions.ttl`
 cat forest_definitions.ttl
 ```
 
-## What You Learn
+## Ce qu'on apprend
 
-1. **Extraction**: Regex-based extraction from CSV
-2. **Structure**: CSV → Python dictionaries → RDF graph
-3. **RDF/SKOS**: Convert to semantic web format (Turtle)
+1. **Extraction**: Extraction basée sur regex à partir d'un CSV
+2. **Structure**: CSV → dictionnaires Python → graphe RDF
+3. **RDF/SKOS**: Conversion en format web sémantique (Turtle)
 
-## Output Files
+## Fichiers de sortie
 
-After running the pipeline:
-- `extracted_definitions.csv` - Extracted and cleaned definitions
-- `forest_definitions.ttl` - RDF/Turtle knowledge graph (readable in any text editor)
+Après avoir exécuté le pipeline:
+- `extracted_definitions.csv` - Définitions extraites et nettoyées
+- `forest_definitions.ttl` - Graphe de connaissances RDF/Turtle (lisible dans n'importe quel éditeur de texte)
 
-## Next Steps (on the full project)
+## Prochaines étapes (sur le projet complet)
 
-- Scale to full document (1,859+ definitions)
-- Add LLM extraction for complex cases
-- Import into Neo4j or Virtuoso graph database
-- Link to ENVO ontology for standardized terms
+- Adapter à l'ensemble du document (1 859+ définitions)
+- Ajouter l'extraction par LLM pour les cas complexes
+- Importer dans Neo4j ou Virtuoso
+- Lier à l'ontologie ENVO pour les termes standardisés
+
 
