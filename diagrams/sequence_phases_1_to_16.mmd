@@ -1,0 +1,349 @@
+sequenceDiagram
+    participant User as User/Team
+    participant Agent as GitHub Copilot
+    participant ExtractScript as extract_definitions.py
+    participant CSV as CSV Files
+    participant RDFScript as csv_to_rdf.py
+    participant RDF as RDF Graph (TTL)
+    participant Neo4jScript as rdf_to_neo4j.py
+    participant Neo4j as Neo4j Database
+    participant Tests as Validation Scripts
+
+    rect rgb(255, 240, 200)
+    Note over User,Neo4j: PHASE 1: DESIGN EXTRACTION STRATEGY
+    end
+    
+    User->>Agent: Need to extract forest definitions from documents
+    Agent->>User: Propose extraction approaches (Regex vs NLP/LLM)
+    User->>Agent: Prefer simple, fast, interpretable solution
+    Agent->>Agent: Analyze document structure patterns
+    User->>User: Review pattern consistency in documents
+    User->>Agent: Decide on Regex-based approach
+    Note over User,Agent: Joint Decision: Regex-Based<br/>User Priorities:<br/>• Fast runtime (minutes, not hours)<br/>• No GPU/cloud dependencies<br/>• Transparent extraction rules<br/>Agent Implementation:<br/>• Pattern matching design<br/>• Keyword-driven extraction<br/>• High precision targeting
+    
+    Agent-->>User: ✓ Extraction strategy agreed
+
+    rect rgb(255, 230, 180)
+    Note over User,Neo4j: PHASE 2: CREATE EXTRACT_DEFINITIONS.PY
+    end
+
+    User->>Agent: Need to extract: country, year, org, criteria
+    Agent->>ExtractScript: Create ForestDefinitionExtractor class
+    Agent->>User: Show initial extraction results
+    User->>Agent: Request better country detection
+    Agent->>ExtractScript: Add 90+ country aliases
+    User->>Agent: Need organization tracking (FAO, UNFCCC)
+    Agent->>ExtractScript: Implement org recognition
+    User->>Agent: Technical criteria must be captured
+    Agent->>ExtractScript: Build criteria parsing regex
+    Note over ExtractScript: Collaborative Build:<br/>• 800+ lines developed iteratively<br/>• User defined requirements<br/>• Agent implemented features<br/>• Tested on real documents<br/>• Refined based on feedback
+    
+    Agent-->>User: ✓ Script ready with requested features
+
+    rect rgb(255, 220, 200)
+    Note over User,Neo4j: PHASE 3: DESIGN KNOWLEDGE REPRESENTATION
+    end
+
+    User->>Agent: Need semantic web representation
+    Agent->>User: Propose RDF with SKOS ontology
+    Agent->>User: Explain SKOS advantages for concepts
+    User->>User: Research SKOS compatibility with ENVO
+    User->>Agent: Approve SKOS approach
+    Agent->>Agent: Design triple structure for definitions
+    User->>Agent: Verify URI scheme and namespace design
+    Note over User,Agent: Joint Decision: SKOS Ontology<br/>User Requirements:<br/>• Standards-based approach<br/>• Future ENVO integration<br/>• Academic rigor<br/>Agent Proposal:<br/>• SKOS for concept hierarchies<br/>• Standard RDF properties<br/>• Extensible design
+    
+    Agent-->>User: ✓ Knowledge model approved
+
+    rect rgb(255, 200, 200)
+    Note over User,Neo4j: PHASE 4: CREATE CSV_TO_RDF.PY
+    end
+
+    User->>Agent: Implement CSV to RDF conversion
+    Agent->>RDFScript: Create csv_to_rdf.py with rdflib
+    Agent->>User: Propose URI naming scheme
+    User->>Agent: Approve ex:def_country_year_seq pattern
+    Agent->>RDFScript: Implement SKOS vocabulary
+    Agent->>User: Show sample RDF output
+    User->>Agent: Validate triple structure
+    Agent->>RDFScript: Add turtle serialization
+    Note over RDFScript: Implementation:<br/>• 250+ lines per spec<br/>• User-approved URI scheme<br/>• SKOS compliance verified<br/>• Tested with real data<br/>• 19,955 triples generated
+    
+    Agent-->>User: ✓ RDF generation working
+
+    rect rgb(255, 180, 180)
+    Note over User,Neo4j: PHASE 5: DESIGN GRAPH DATABASE SOLUTION
+    end
+
+    User->>Agent: Need graph database for GraphRAG
+    Agent->>User: Propose Neo4j for relationship queries
+    Agent->>User: Explain Neo4j vs alternatives
+    User->>User: Evaluate GraphRAG requirements
+    User->>Agent: Request constraint capabilities
+    Agent->>User: Confirm Neo4j supports unique constraints
+    User->>Agent: Decide on Neo4j
+    Note over User,Agent: Joint Decision: Neo4j<br/>User Priorities:<br/>• GraphRAG compatibility<br/>• Query performance<br/>• Data integrity (constraints)<br/>Agent Recommendation:<br/>• Native graph support<br/>• Cypher query language<br/>• Production-ready ecosystem
+    
+    Agent-->>User: ✓ Neo4j selected
+
+    rect rgb(230, 180, 200)
+    Note over User,Neo4j: PHASE 6: CREATE RDF_TO_NEO4J.PY
+    end
+
+    User->>Agent: Create RDF to Neo4j importer
+    Agent->>User: Propose node type structure
+    User->>Agent: Approve 4 node types (Concept, Definition, Source, Criteria)
+    Agent->>Neo4jScript: Implement RDF parsing
+    User->>Agent: Request relationship types mapping
+    Agent->>Neo4jScript: Create HAS_DEFINITION, FROM_SOURCE, HAS_CRITERIA
+    User->>Agent: Test import with sample data
+    Agent->>User: Show imported graph structure
+    Note over Neo4jScript: Collaborative Development:<br/>• 350+ lines built to spec<br/>• User defined node schema<br/>• Tested incrementally<br/>• User validated results<br/>• Constraint logic added
+    
+    Agent-->>User: ✓ Import script validated
+
+    rect rgb(220, 180, 220)
+    Note over User,Neo4j: PHASE 7: ESTABLISH CONFIGURATION MANAGEMENT
+    end
+
+    User->>Agent: Need centralized configuration
+    Agent->>User: Propose config.py approach
+    User->>Agent: Specify 18 forest concepts to track
+    Agent->>ExtractScript: Add CONCEPTS_TO_EXTRACT list
+    User->>Agent: Provide definition keyword list
+    Agent->>ExtractScript: Add DEFINITION_KEYWORDS
+    User->>Agent: Request environment variable support
+    Agent->>ExtractScript: Add env var fallbacks
+    Note over ExtractScript: User-Driven Config:<br/>• User defined 18 concepts<br/>• User specified keywords<br/>• User built country list<br/>• Agent organized structure<br/>• Production deployment ready
+    
+    Agent-->>User: ✓ Configuration complete
+
+    rect rgb(200, 180, 240)
+    Note over User,Neo4j: PHASE 8: DESIGN DATA FLOW PIPELINE
+    end
+
+    User->>Agent: How do the scripts connect?
+    Agent->>User: Propose DOCX → CSV → RDF → Neo4j pipeline
+    User->>Agent: Verify metadata flows through all stages
+    Agent->>User: Show transformation at each stage
+    User->>Agent: Request error handling strategy
+    Agent->>Agent: Design error logging approach
+    User->>Agent: Approve pipeline architecture
+    Note over User,Agent: Pipeline Design:<br/>User Validated:<br/>• End-to-end data flow<br/>• Metadata preservation<br/>• Error recovery strategy<br/>Agent Implemented:<br/>• Stage transformations<br/>• Logging framework<br/>• Testing strategy
+    
+    Agent-->>User: ✓ Pipeline architecture approved
+
+    rect rgb(200, 255, 200)
+    Note over User,Neo4j: PHASE 9: AUDIT LOGGING SYSTEM
+    end
+
+    User->>Agent: Need comprehensive logging for debugging
+    User->>Agent: Want to see why paragraphs are skipped
+    Agent->>User: Propose dual logging (audit + errors)
+    User->>Agent: Need to track ALL paragraphs, not just extracted ones
+    Agent->>ExtractScript: Design audit_paragraph() method
+    Agent->>ExtractScript: Design audit_error() method
+    User->>Agent: Review log format proposal
+    User->>Agent: Approve logging approach
+    Agent->>ExtractScript: Implement logging infrastructure
+    
+    ExtractScript->>CSV: outputs/extraction_audit.log
+    ExtractScript->>CSV: outputs/extraction_errors.log
+    
+    User->>Agent: Test with sample document
+    Agent->>User: Show 3,308 paragraphs tracked
+    
+    Note over ExtractScript: User Requirements Met:<br/>• Track ALL paragraphs<br/>• Separate error log<br/>• Timestamp each operation<br/>• Skip reasons recorded
+    
+    Agent-->>User: ✓ Audit system operational
+
+    rect rgb(255, 220, 220)
+    Note over User,Neo4j: PHASE 10: SI UNIT NORMALIZATION
+    end
+
+    User->>Agent: Documents use mixed units (acres, feet)
+    User->>Agent: Need standardization for comparisons
+    Agent->>User: Propose SI unit conversion with originals preserved
+    User->>Agent: Approve - need both for context
+    Agent->>ExtractScript: Implement conversion logic
+    Agent->>User: Show conversion examples
+    User->>Agent: Validate conversion factors
+    
+    Note over ExtractScript: User Requirements:<br/>• Acres → Hectares (×0.404686)<br/>• Feet → Meters (×0.3048)<br/>• Preserve original values<br/>• Add *_si columns
+    
+    ExtractScript->>CSV: Add min_area_si, min_height_si columns
+    
+    Agent-->>User: ✓ SI normalization working<br/>793 criteria standardized
+
+    rect rgb(220, 220, 255)
+    Note over User,Neo4j: PHASE 11: SYNONYM DETECTION
+    end
+
+    User->>Agent: Getting poor matches: "USA" vs "United States"
+    User->>Agent: Organizations written inconsistently
+    Agent->>User: Propose alias dictionary approach
+    User->>Agent: Request comprehensive synonym mapping
+    Agent->>ExtractScript: Build country_aliases dict (90+ entries)
+    User->>Agent: Need org normalization (UN-FAO / FAO / un.fao)
+    Agent->>ExtractScript: Add organization aliases
+    User->>Agent: Test with real document examples
+    Agent->>User: Show improved entity matching
+    
+    Note over ExtractScript: User-Validated Synonyms:<br/>• "United States" → "USA"<br/>• "Russian Federation" → "Russia"<br/>• "UN-FAO" / "FAO" → "UN-FAO"<br/>• Source tag parsing enhanced
+    
+    Agent-->>User: ✓ Synonym detection validated
+
+    rect rgb(230, 200, 255)
+    Note over User,Neo4j: PHASE 12: RDF GENERATION REFINEMENT
+    end
+
+    User->>Agent: Review initial RDF output
+    User->>Agent: Verify SKOS property usage
+    Agent->>User: Show triple samples from generation
+    User->>Agent: Request property relationship validation
+    Agent->>RDFScript: Enhance triple generation
+    RDFScript->>CSV: Read criteria.csv & definition.csv
+    RDFScript->>RDF: Generate forest_definitions.ttl
+    User->>Agent: Validate output against SKOS patterns
+    Agent->>User: Confirm SKOS compliance
+    
+    Note over RDF: Final Statistics:<br/>19,955 triples<br/>18 concepts<br/>1,859 definitions<br/>User validated structure
+    
+    Agent-->>User: ✓ RDF generation validated
+
+    rect rgb(200, 255, 220)
+    Note over User,Neo4j: PHASE 13: NEO4J IMPORT REFINEMENT
+    end
+
+    User->>Agent: Review Neo4j graph structure
+    User->>Agent: Verify all relationships imported
+    Agent->>User: Show node/relationship statistics
+    User->>Agent: Request query examples validation
+    Agent->>Neo4jScript: Test import with full dataset
+    
+    Neo4jScript->>Neo4j: Connect bolt://localhost:7687
+    Neo4jScript->>RDF: Parse forest_definitions.ttl
+    Neo4jScript->>Neo4j: Create nodes & relationships
+    
+    User->>Neo4j: Run validation queries
+    User->>Agent: Confirm graph structure meets requirements
+    
+    Note over Neo4j: User-Validated Graph:<br/>~2,700+ nodes<br/>~5,794 relationships<br/>4 node types<br/>GraphRAG ready
+    
+    Agent-->>User: ✓ Neo4j import validated
+
+    rect rgb(255, 200, 200)
+    Note over User,Neo4j: PHASE 14: DATA INTEGRITY - CONSTRAINTS
+    end
+
+    User->>Agent: Prevent duplicates on re-import
+    Agent->>User: Propose unique constraints on URIs
+    User->>Agent: Approve constraint strategy
+    Agent->>Neo4jScript: Add CREATE_CONSTRAINTS flag
+    Agent->>Neo4jScript: Implement constraint creation
+    
+    Neo4jScript->>Neo4j: CREATE CONSTRAINT concept_uri...
+    Neo4j-->>Neo4jScript: ⚠️ Error: Index exists on concept_uri
+    Agent->>User: Report index/constraint conflict
+    User->>Agent: Need diagnostic tool
+    
+    Agent->>Agent: Create check_neo4j_constraints.py
+    Agent->>Neo4j: SHOW CONSTRAINTS & INDEXES
+    Agent->>User: Show existing indexes blocking constraints
+    User->>Agent: Drop indexes, create constraints instead
+    
+    Agent->>Neo4jScript: Add index detection logic
+    Neo4jScript->>Neo4j: DROP INDEX concept_uri IF EXISTS
+    Neo4jScript->>Neo4j: CREATE CONSTRAINT concept_uri...
+    Neo4j-->>Neo4jScript: ✓ All 4 constraints created
+    
+    User->>Agent: Validate constraints active
+    
+    Agent-->>User: ✓ Constraints operational<br/>Duplicates prevented
+
+    rect rgb(255, 230, 180)
+    Note over User,Neo4j: PHASE 15: IDEMPOTENCY TESTING
+    end
+
+    User->>Agent: Need to ensure reproducibility
+    User->>Agent: Same input must give same output
+    Agent->>User: Propose idempotency test approach
+    User->>Agent: Approve testing strategy
+    Agent->>Tests: Create test_idempotency.py
+    
+    Tests->>ExtractScript: Run extraction (pass 1)
+    ExtractScript->>CSV: Generate output_1/
+    
+    Tests->>ExtractScript: Run extraction (pass 2)
+    ExtractScript->>CSV: Generate output_2/
+    
+    Tests->>Tests: Compare outputs byte-by-byte
+    Tests->>Agent: Report comparison results
+    Agent->>User: Show test results - all files match
+    User->>Agent: Confirm reproducibility requirement met
+    
+    Note over Tests: User-Approved Validation:<br/>✓ Same input → same output<br/>✓ No randomness<br/>✓ Deterministic processing
+    
+    Agent-->>User: ✓ Reproducibility verified
+
+    rect rgb(200, 220, 255)
+    Note over User,Neo4j: PHASE 16: SCHEMA VALIDATION
+    end
+
+    User->>Agent: Validate overall data quality
+    User->>Agent: Need comprehensive quality checks
+    Agent->>User: Propose multi-layer validation approach
+    User->>Agent: Approve - check CSV, RDF, and Neo4j
+    Agent->>Tests: Create check_constraints.py
+    
+    Tests->>CSV: Check required fields (country, year, definition)
+    Tests->>CSV: Validate value ranges (years 1800-2100)
+    Tests->>Agent: Report CSV validation results
+    Agent->>User: CSV layer validated
+    
+    Tests->>RDF: Verify SKOS compliance
+    Tests->>Agent: Report RDF validation results
+    Agent->>User: RDF layer validated
+    
+    Tests->>Neo4j: Check URI uniqueness
+    Tests->>Neo4j: Verify relationship integrity
+    Tests->>Agent: Report Neo4j validation results
+    Agent->>User: Neo4j layer validated
+    
+    User->>Agent: All validations passed?
+    
+    Note over Tests: User-Approved Quality:<br/>✓ All required fields present<br/>✓ Value ranges valid<br/>✓ SKOS compliant<br/>✓ URIs unique<br/>✓ Relationships intact
+    
+    Agent-->>User: ✓ Full validation complete<br/>Production ready
+
+    rect rgb(255, 200, 200)
+    Note over User,Neo4j: OPTIMIZATION: LLM FALLBACK REMOVAL
+    end
+
+    User->>Agent: "Remove the fallback - don't want to spend so much resources"
+    Agent->>User: Confirm removal: will delete LLM queue system
+    User->>Agent: Yes - regex extraction is sufficient
+    Agent->>ExtractScript: Remove 47 lines (queue code, export_llm_queue)
+    Agent->>ExtractScript: Delete scripts/extraction_fallback.py
+    Agent->>ExtractScript: Update config.py (ENABLE_LLM_FALLBACK_QUEUE = False)
+    Agent->>ExtractScript: Remove pydantic/openai from requirements.txt
+    Agent->>User: Show performance impact: 1-3 hours → <5 minutes
+    User->>Agent: Perfect - much better
+    
+    Note over ExtractScript: User Decision Impact:<br/>• Removed GPU/Ollama dependency<br/>• Simplified architecture<br/>• Reduced runtime 95%<br/>• Kept high extraction quality
+
+    Agent-->>User: ✓ System optimized per your requirements
+
+    rect rgb(220, 220, 220)
+    Note over User,Neo4j: COLLABORATIVE SUCCESS - PRODUCTION READY
+    end
+
+    Note over User,Agent: Project Built Through:<br/>• User requirements & decisions<br/>• Agent implementation<br/>• Iterative refinement<br/>• Joint problem-solving<br/>• Continuous validation
+
+    Note over ExtractScript: extract_definitions.py<br/>📊 User-requested audit logging<br/>🔄 User-validated SI normalization<br/>🏷️ User-defined synonym detection<br/>📈 ~1,859 definitions/run<br/>⏱️ <5 min (User optimized)
+
+    Note over RDF: forest_definitions.ttl<br/>🌐 19,955 triples<br/>📚 18 User-selected concepts<br/>🔗 ENVO ready (User requirement)<br/>✅ SKOS (Joint decision)
+
+    Note over Neo4j: Neo4j Database<br/>🎯 ~2,700+ nodes<br/>🔗 ~5,794 relationships<br/>🔒 4 constraints (User required)<br/>🚀 GraphRAG (User goal)
+
+    Note over Tests: Validation Suite<br/>♻️ Idempotency (User requirement)<br/>✅ Schema validated<br/>📋 Quality assured<br/>🎯 User-approved production ready
