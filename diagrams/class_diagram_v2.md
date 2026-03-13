@@ -4,56 +4,63 @@ This diagram reflects the model actually implemented in the CSV → RDF → Neo4
 
 ```mermaid
 classDiagram
-    class Concept {
-        +uri : String
-        +name : String
-        +prefLabel : String
-        +altLabels : List~String~
-    }
+   class Concept {
+       +uri : String
+       +name : String
+       +prefLabel : String
+       +altLabels : List<String>
+   }
 
-    class Definition {
-        +uri : String
-        +id : String
-        +name : String
-        +label : String
-        +type : String
-        +text : String
-        +geographicScope : String
-        +country : String
-    }
 
-    class Source {
-        +uri : String
-        +name : String
-        +organization : String
-        +country : String
-        +year : Integer
-        +url : String
-        +geographicScope : String
-    }
+   class Definition {
+       +uri : String
+       +id : String
+       +name : String
+       +label : String
+       +type : String
+       +text : String
+       +geographicScope : String
+       +country : String
+   }
 
-    class Country {
-      +uri : String
-      +name : String
-    }
 
-    class TechnicalCriteria {
-        +uri : String
-        +minArea : Float
-        +minCanopyCover : Float
-        +minHeight : Float
-        +minWidth : Float
-        +minAreaSI : Float
-        +minCanopyCoverSI : Float
-        +minHeightSI : Float
-        +minWidthSI : Float
-    }
+   class Source {
+       +uri : String
+       +name : String
+       +organization : String
+       +country : String
+       +year : Integer
+       +url : String
+       +geographicScope : String
+   }
 
-    Concept "1" --> "0..*" Definition : HAS_DEFINITION
-    Concept "0..*" --> "0..*" Concept : AFFECTS / PART_OF / RELATED_TO / OPPOSITE_OF / MANAGES / MEASURES / DERIVED_FROM / SYNONYM_OF
-    Definition "0..*" --> "1" Source : PROVIDED_BY
-    Definition "0..1" --> "0..1" Country : APPLIES_TO
-    Definition "1" --> "0..1" TechnicalCriteria : QUANTIFIED_BY
+
+   class GeographicZone {
+     +uri : String
+     +name : String
+   }
+
+
+
+
+   class TechnicalCriteria {
+       +uri : String
+       +minArea : Float
+       +minCanopyCover : Float
+       +minHeight : Float
+       +minWidth : Float
+       +minAreaSI : Float
+       +minCanopyCoverSI : Float
+       +minHeightSI : Float
+       +minWidthSI : Float
+   }
+
+
+   Concept "1" --> "0..*" Definition : HAS_DEFINITION
+   Concept "0..*" --> "0..*" Concept : AFFECTS / PART_OF / RELATED_TO / OPPOSITE_OF / MANAGES / MEASURES / DERIVED_FROM / SYNONYM_OF
+   Definition "0..*" --> "1" Source : PROVIDED_BY
+   Definition "0..1" --> "0..1" GeographicZone : APPLIES_TO
+   Definition "1" --> "0..1" TechnicalCriteria : QUANTIFIED_BY
 ```
 
 ## Code Alignment Notes

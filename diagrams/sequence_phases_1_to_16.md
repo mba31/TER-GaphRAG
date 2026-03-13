@@ -1,3 +1,6 @@
+## Sequence Diagram (Phases 1 to 16)
+
+```mermaid
 sequenceDiagram
     participant User as User/Team
     participant Agent as GitHub Copilot
@@ -12,7 +15,7 @@ sequenceDiagram
     rect rgb(255, 240, 200)
     Note over User,Neo4j: PHASE 1: DESIGN EXTRACTION STRATEGY
     end
-    
+
     User->>Agent: Need to extract forest definitions from documents
     Agent->>User: Propose extraction approaches (Regex vs NLP/LLM)
     User->>Agent: Prefer simple, fast, interpretable solution
@@ -347,3 +350,4 @@ sequenceDiagram
     Note over Neo4j: Neo4j Database<br/>🎯 ~2,700+ nodes<br/>🔗 ~5,794 relationships<br/>🔒 4 constraints (User required)<br/>🚀 GraphRAG (User goal)
 
     Note over Tests: Validation Suite<br/>♻️ Idempotency (User requirement)<br/>✅ Schema validated<br/>📋 Quality assured<br/>🎯 User-approved production ready
+```
