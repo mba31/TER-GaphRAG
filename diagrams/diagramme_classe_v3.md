@@ -28,11 +28,19 @@ class Source {
 class GeographicZone {
   +String uri
   +String name
+  +Shape geometry
 }
 
 class Country {
-  +String CountryName
-  +Enum 
+  +String uri
+  +String countryName
+  +String capital
+  +List oficialLanguages
+}
+
+class Region {
+  +String uri
+  +String RegionName
 }
 
 class Organization {
@@ -57,7 +65,7 @@ Source "1" --> "0..*" Definition : PROVIDED_BY
 Definition "0..*" --> "0..*" GeographicZone : APPLIES_TO
 Definition "1" --> "0..*" TechnicalCriteria : QUANTIFIED_BY
 GeographicZone <|-- Country
-GeographicZone "0..*" --> Organization : IS_MEMBER_OF
+GeographicZone <|-- Region
+GeographicZone "0..*" --> "0..*" Organization : IS_MEMBER_OF
+Concept "0..*" --> "0..*" Concept : ConceptRelation
 
-Concept "1" --> "0..*" ConceptRelation : sourceConcept
-ConceptRelation "0..*" --> "1" Concept : targetConcept
