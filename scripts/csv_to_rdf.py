@@ -41,6 +41,7 @@ class CSVToRDFConverter:
         self.RDF = RDF
         self.RDFS = RDFS
         self.XSD = XSD
+        self.ENVO = Namespace(config.ENVO_NAMESPACE_URI)
         
         # Bind namespaces to graph
         self.graph.bind("skos", SKOS)
@@ -48,10 +49,13 @@ class CSVToRDFConverter:
         self.graph.bind("rdfs", RDFS)
         self.graph.bind("ex", self.EX)
         self.graph.bind("xsd", XSD)
+        self.graph.bind("envo", self.ENVO)
         
         # Storage for definitions and criteria
         self.definitions_data = []
         self.criteria_data = []
+        self.envo_mappings = {}
+        self.envo_mapping_links = 0
 
         # Concept relationships with semantic types
         self.concept_relations = {
@@ -86,6 +90,110 @@ class CSVToRDFConverter:
             # Products
             "Timber": {"target": "Tree", "relation": "derivedFrom"}
         }
+
+        self.skos_match_predicates = {
+            "exactMatch": SKOS.exactMatch,
+            "closeMatch": SKOS.closeMatch,
+            "broadMatch": SKOS.broadMatch,
+            "narrowMatch": SKOS.narrowMatch,
+        }
+
+    def load_envo_mappings(self, mappings_path):
+        """
+        Load ENVO mappings from CSV.
+
+        Expected columns:
+        - local_concept
+        - envo_id (e.g., 00000066, ENVO_00000066, envo:00000066, or full URI)
+        - match_type (exactMatch|closeMatch|broadMatch|narrowMatch)
+
+        Args:
+            mappings_path: Path to envo_mappings.csv
+        """
+        path_obj = Path(mappings_path)
+        if not config.ENABLE_ENVO_MAPPINGS:
+            print("[*] ENVO mappings disabled by configuration")
+            return
+
+        if not path_obj.exists():
+            print(f"[WARN] ENVO mappings file not found: {mappings_path}")
+            print("      Continuing without ENVO mappings")
+            return
+
+        print(f"[*] Loading ENVO mappings from {mappings_path}...")
+        loaded_rows = 0
+        with open(path_obj, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                local_concept = (row.get('local_concept') or '').strip()
+                raw_envo_id = (row.get('envo_id') or '').strip()
+                match_type = (row.get('match_type') or 'exactMatch').strip()
+
+                if not local_concept or not raw_envo_id:
+                    continue
+
+                if match_type not in self.skos_match_predicates:
+                    print(
+                        f"[WARN] Skipping ENVO mapping with invalid match_type "
+                        f"'{match_type}' for concept '{local_concept}'"
+                    )
+                    continue
+
+                envo_uri = self.normalize_envo_uri(raw_envo_id)
+                self.envo_mappings.setdefault(local_concept, []).append(
+                    {
+                        'envo_uri': envo_uri,
+                        'match_type': match_type,
+                    }
+                )
+                loaded_rows += 1
+
+        print(f"   Loaded {loaded_rows} ENVO mappings for {len(self.envo_mappings)} concepts")
+
+    def normalize_envo_uri(self, raw_envo_id):
+        """
+        Convert flexible ENVO identifiers into full ENVO URIRef.
+
+        Accepted formats:
+        - 00000066
+        - ENVO_00000066
+        - envo:00000066
+        - http://purl.obolibrary.org/obo/ENVO_00000066
+        """
+        raw = raw_envo_id.strip()
+        if raw.startswith("http://") or raw.startswith("https://"):
+            return URIRef(raw)
+
+        token = raw
+        if raw.lower().startswith("envo:"):
+            token = raw.split(":", 1)[1]
+        if token.upper().startswith("ENVO_"):
+            token = token.split("_", 1)[1]
+
+        return URIRef(f"{config.ENVO_NAMESPACE_URI}{token}")
+
+    def apply_envo_mappings(self, concepts):
+        """Add SKOS mapping links from local concepts to ENVO terms."""
+        if not self.envo_mappings:
+            return
+
+        links_added = 0
+        missing_concepts = 0
+        for local_concept, mappings in self.envo_mappings.items():
+            concept_uri = concepts.get(local_concept)
+            if not concept_uri:
+                missing_concepts += 1
+                continue
+
+            for mapping in mappings:
+                predicate = self.skos_match_predicates[mapping['match_type']]
+                self.graph.add((concept_uri, predicate, mapping['envo_uri']))
+                links_added += 1
+
+        self.envo_mapping_links = links_added
+        print(f"   ENVO mapping links added: {links_added}")
+        if missing_concepts:
+            print(f"   [WARN] ENVO mappings referencing unknown concepts: {missing_concepts}")
     
     def load_csv_data(self, criteria_path, definition_path):
         """
@@ -427,10 +535,12 @@ class CSVToRDFConverter:
         
         # Add concept semantic relations after all concepts are known
         relation_links = self.add_concept_relations(concepts)
+        self.apply_envo_mappings(concepts)
         print(f"   Concepts: {len(concepts)}")
         print(f"   Sources: {len(sources)}")
         print(f"   Countries: {len(countries)}")
         print(f"   Concept relation links: {relation_links}")
+        print(f"   ENVO links: {self.envo_mapping_links}")
         print(f"   Total triples: {len(self.graph)}")
     
     def save_to_file(self, output_path):
@@ -456,9 +566,10 @@ def main():
     """Main execution function."""
     
     # Configuration
-    CRITERIA_CSV = "csv/criteria.csv"
-    DEFINITION_CSV = "csv/definition.csv"
-    OUTPUT_TTL = "data/forest_definitions.ttl"
+    CRITERIA_CSV = str(config.CRITERIA_CSV)
+    DEFINITION_CSV = str(config.DEFINITION_CSV)
+    OUTPUT_TTL = str(config.RDF_OUTPUT)
+    ENVO_MAPPINGS_CSV = str(config.ENVO_MAPPINGS_CSV)
     
     print("=" * 60)
     print("CSV to RDF Converter")
@@ -480,6 +591,9 @@ def main():
     
     # Load CSV data
     converter.load_csv_data(CRITERIA_CSV, DEFINITION_CSV)
+
+    # Load ENVO mappings (optional)
+    converter.load_envo_mappings(ENVO_MAPPINGS_CSV)
     
     # Convert to RDF
     converter.convert()

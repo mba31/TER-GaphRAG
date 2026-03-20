@@ -15,6 +15,14 @@ docs/sources/forest_definitions.docx
 
 ### 3. Run the Pipeline
 
+**One-command option (recommended)**
+```powershell
+python scripts/run_pipeline.py --clear-db
+# optional: --graphrag-question "What is forest?" or --skip-graphrag-query
+```
+
+Or run step-by-step:
+
 **Step 1: Extract from document**
 ```powershell
 python scripts/extract_definitions.py
@@ -23,6 +31,7 @@ python scripts/extract_definitions.py
 
 **Step 2: Convert to RDF**
 ```powershell
+python scripts/envo_auto_map.py
 python scripts/csv_to_rdf.py
 ```
 [*] Creates `data/forest_definitions.ttl`

@@ -77,6 +77,16 @@ NAMESPACE_URI = "http://ter2026-project.org/forest#"
 # Use SKOS vocabulary
 USE_SKOS = True
 
+# ENVO integration
+ENVO_NAMESPACE_URI = "http://purl.obolibrary.org/obo/ENVO_"
+ENVO_MAPPINGS_CSV = CSV_DIR / "envo_mappings.csv"
+ENABLE_ENVO_MAPPINGS = True
+ENABLE_ENVO_AUTO_MAPPING = True
+ENVO_OLS4_SEARCH_URL = "https://www.ebi.ac.uk/ols4/api/search"
+ENVO_OLS4_API_BASE = "https://www.ebi.ac.uk/ols4/api"
+ENVO_SUBGRAPH_PARENT_DEPTH = 2
+ENVO_SUBGRAPH_CHILD_DEPTH = 1
+
 # ==================
 # Neo4j Settings
 # ==================

@@ -71,8 +71,13 @@ pip install -r requirements.txt
 
 # 2. Run pipeline
 python scripts/extract_definitions.py
+python scripts/envo_auto_map.py
 python scripts/csv_to_rdf.py
 python scripts/rdf_to_neo4j.py --clear-db
+
+# Or run everything at once
+python scripts/run_pipeline.py --clear-db
+# (includes a GraphRAG smoke query; customize with --graphrag-question)
 
 # 3. Verify with tests
 python tests/check_constraints.py
@@ -81,6 +86,9 @@ python tests/test_idempotency.py
 # 4. Open Neo4j Browser
 # http://localhost:7474
 # Run: MATCH (c:Concept)-[:HAS_DEFINITION]->(d:Definition) RETURN c, d LIMIT 10
+
+# 5. Run a GraphRAG retrieval query
+python scripts/graphrag_query.py --question "What is afforestation?"
 ```
 
 **For detailed setup:** → [5-Minute Quick Start](docs/QUICKSTART.md)

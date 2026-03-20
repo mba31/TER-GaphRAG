@@ -43,6 +43,8 @@ try:
             "Definitions": "MATCH (d:Definition) RETURN count(d)",
             "Sources": "MATCH (s:Source) RETURN count(s)",
             "Countries": "MATCH (c:Country) RETURN count(c)",
+            "ENVO Terms": "MATCH (e:ENVOTerm) RETURN count(e)",
+            "ENVO Match Links": "MATCH (:Concept)-[r:EXACT_MATCH|CLOSE_MATCH|BROAD_MATCH|NARROW_MATCH]->(:ENVOTerm) RETURN count(r)",
             "Relationships": "MATCH ()-[r]->() RETURN count(r)"
         }
         
