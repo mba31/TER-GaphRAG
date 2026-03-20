@@ -8,6 +8,8 @@ What it does:
 3) Upserts ENVOTerm nodes in Neo4j
 4) Creates hierarchy edges (:ENVOTerm)-[:IS_A]->(:ENVOTerm)
 5) Optionally links local Concept nodes to ENVOTerm nodes using mapping match types
+
+Use --seed-only to only refresh/write ENVO mappings CSV without importing to Neo4j.
 """
 
 from __future__ import annotations
@@ -521,6 +523,11 @@ def main() -> None:
         help="Persist auto/hybrid discovered seeds back to mappings CSV",
     )
     parser.add_argument(
+        "--seed-only",
+        action="store_true",
+        help="Only build/write ENVO seeds and exit before Neo4j import",
+    )
+    parser.add_argument(
         "--parent-depth",
         type=int,
         default=getattr(config, "ENVO_SUBGRAPH_PARENT_DEPTH", 2),
@@ -593,6 +600,10 @@ def main() -> None:
     print(f"[*] Unique seed ENVO terms: {len(seed_uris)}")
     print(f"[*] Parent depth: {args.parent_depth}")
     print(f"[*] Child depth: {args.child_depth}")
+
+    if args.seed_only:
+        print("\n[OK] Seed-only mode complete (Neo4j import skipped)")
+        return
 
     terms_by_uri, is_a_edges = crawl_envo_subgraph(
         client=client,

@@ -4,10 +4,11 @@ Run full TER2026 pipeline in one command.
 
 Steps:
 1) extract_definitions.py
-2) envo_auto_map.py (optional/automatic)
+2) import_envo_subgraph.py --seed-only (optional/automatic)
 3) csv_to_rdf.py
 4) rdf_to_neo4j.py (optional)
-5) graphrag_query.py (smoke query)
+5) import_envo_subgraph.py (optional ENVO hierarchy import)
+6) graphrag_query.py (smoke query)
 """
 
 from __future__ import annotations
@@ -54,9 +55,9 @@ def main() -> None:
         help="Skip tools/check_setup.py before running",
     )
     parser.add_argument(
-        "--skip-envo-auto-map",
+        "--skip-envo-seed-refresh",
         action="store_true",
-        help="Skip automatic ENVO mapping generation",
+        help="Skip ENVO seed refresh before CSV -> RDF conversion",
     )
     parser.add_argument(
         "--skip-envo-subgraph",
@@ -84,7 +85,7 @@ def main() -> None:
     parser.add_argument(
         "--envo-write-mappings-csv",
         action="store_true",
-        help="Persist auto/hybrid ENVO seeds back to csv/envo_mappings.csv",
+        help="Also persist ENVO seed updates during Neo4j subgraph import",
     )
     parser.add_argument(
         "--neo4j-browser-url",
@@ -120,13 +121,20 @@ def main() -> None:
         "Extract definitions (DOCX -> CSV)",
     )
 
-    if not args.skip_envo_auto_map:
+    if not args.skip_envo_seed_refresh:
         run_step(
-            [sys.executable, str(SCRIPTS_DIR / "envo_auto_map.py")],
-            "Auto-generate ENVO mappings",
+            [
+                sys.executable,
+                str(SCRIPTS_DIR / "import_envo_subgraph.py"),
+                "--seed-mode",
+                args.envo_seed_mode,
+                "--seed-only",
+                "--write-mappings-csv",
+            ],
+            "Refresh ENVO mappings (seed-only)",
         )
     else:
-        print("\n[INFO] ENVO auto-mapping step skipped (--skip-envo-auto-map)")
+        print("\n[INFO] ENVO seed refresh skipped (--skip-envo-seed-refresh)")
 
     run_step(
         [sys.executable, str(SCRIPTS_DIR / "csv_to_rdf.py")],

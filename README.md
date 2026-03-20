@@ -71,9 +71,10 @@ pip install -r requirements.txt
 
 # 2. Run pipeline
 python scripts/extract_definitions.py
-python scripts/envo_auto_map.py
+python scripts/import_envo_subgraph.py --seed-mode hybrid --seed-only --write-mappings-csv
 python scripts/csv_to_rdf.py
 python scripts/rdf_to_neo4j.py --clear-db
+python scripts/import_envo_subgraph.py --seed-mode hybrid --parent-depth 2 --child-depth 1
 
 # Or run everything at once
 python scripts/run_pipeline.py --clear-db
@@ -126,8 +127,10 @@ TER2026/
 │
 ├── scripts/                         # Main pipeline scripts
 │   ├── extract_definitions.py      # Extract DOCX → CSV (with audit logging)
+│   ├── import_envo_subgraph.py     # ENVO seed refresh + scoped ENVO hierarchy import
 │   ├── csv_to_rdf.py               # CSV → RDF/Turtle (SKOS ontology)
-│   └── rdf_to_neo4j.py             # RDF → Neo4j (with constraints)
+│   ├── rdf_to_neo4j.py             # RDF → Neo4j (with constraints)
+│   └── graphrag_query.py           # GraphRAG retrieval with ENVO expansion
 │
 ├── tests/                           # Verification & testing scripts
 │   ├── test_constraints.py         # Verify constraints exist
