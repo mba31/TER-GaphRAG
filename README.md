@@ -71,8 +71,14 @@ pip install -r requirements.txt
 
 # 2. Run pipeline
 python scripts/extract_definitions.py
+python scripts/import_envo_subgraph.py --seed-mode hybrid --seed-only --write-mappings-csv
 python scripts/csv_to_rdf.py
 python scripts/rdf_to_neo4j.py --clear-db
+python scripts/import_envo_subgraph.py --seed-mode hybrid --parent-depth 2 --child-depth 1
+
+# Or run everything at once
+python scripts/run_pipeline.py --clear-db
+# (includes a GraphRAG smoke query; customize with --graphrag-question)
 
 # 3. Verify with tests
 python tests/check_constraints.py
@@ -81,6 +87,9 @@ python tests/test_idempotency.py
 # 4. Open Neo4j Browser
 # http://localhost:7474
 # Run: MATCH (c:Concept)-[:HAS_DEFINITION]->(d:Definition) RETURN c, d LIMIT 10
+
+# 5. Run a GraphRAG retrieval query
+python scripts/graphrag_query.py --question "What is afforestation?"
 ```
 
 **For detailed setup:** → [5-Minute Quick Start](docs/QUICKSTART.md)
@@ -118,8 +127,10 @@ TER2026/
 │
 ├── scripts/                         # Main pipeline scripts
 │   ├── extract_definitions.py      # Extract DOCX → CSV (with audit logging)
+│   ├── import_envo_subgraph.py     # ENVO seed refresh + scoped ENVO hierarchy import
 │   ├── csv_to_rdf.py               # CSV → RDF/Turtle (SKOS ontology)
-│   └── rdf_to_neo4j.py             # RDF → Neo4j (with constraints)
+│   ├── rdf_to_neo4j.py             # RDF → Neo4j (with constraints)
+│   └── graphrag_query.py           # GraphRAG retrieval with ENVO expansion
 │
 ├── tests/                           # Verification & testing scripts
 │   ├── test_constraints.py         # Verify constraints exist

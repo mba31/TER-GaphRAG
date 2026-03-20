@@ -15,6 +15,14 @@ docs/sources/forest_definitions.docx
 
 ### 3. Run the Pipeline
 
+**One-command option (recommended)**
+```powershell
+python scripts/run_pipeline.py --clear-db
+# optional: --graphrag-question "What is forest?" or --skip-graphrag-query
+```
+
+Or run step-by-step:
+
 **Step 1: Extract from document**
 ```powershell
 python scripts/extract_definitions.py
@@ -23,6 +31,7 @@ python scripts/extract_definitions.py
 
 **Step 2: Convert to RDF**
 ```powershell
+python scripts/import_envo_subgraph.py --seed-mode hybrid --seed-only --write-mappings-csv
 python scripts/csv_to_rdf.py
 ```
 [*] Creates `data/forest_definitions.ttl`
@@ -32,6 +41,7 @@ python scripts/csv_to_rdf.py
 # First, install and start Neo4j
 # Then run:
 python scripts/rdf_to_neo4j.py
+python scripts/import_envo_subgraph.py --seed-mode hybrid --parent-depth 2 --child-depth 1
 ```
 
 ## [*] What Each Script Does

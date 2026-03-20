@@ -336,6 +336,11 @@ LIMIT 10
 
 ## Integration with RAG Systems
 
+### CLI helper (ready to use)
+```powershell
+python scripts/graphrag_query.py --question "What is afforestation?"
+```
+
 ### LangChain Example Pattern
 ```python
 from langchain.graphs import Neo4jGraph

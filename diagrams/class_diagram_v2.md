@@ -4,13 +4,43 @@ This diagram reflects the model actually implemented in the CSV → RDF → Neo4
 
 ```mermaid
 classDiagram
+   class Organization {
+       +uri : String
+       +name : String
+       +type : String  %% FAO, UN, NationalAgency, etc.
+       +country : String  %% if applicable
+       +url : String
+   }
+
+   class GeospatialContext {
+       +uri : String
+       +name : String
+       +contextType : String  %% "Country", "ClimateRegion", "Ecoregion"
+   }
+
+   class Country {
+       +iso_code : String
+       +continent : String
+   }
+
+   class ClimateRegion {
+       +classification_system : String  %% Köppen, Holdridge, etc.
+       +temperature_range : String
+       +precipitation_range : String
+   }
+
+   class Ecoregion {
+       +wwf_code : String
+       +biome : String
+       +ecoregion_name : String
+   }
+
    class Concept {
        +uri : String
        +name : String
        +prefLabel : String
        +altLabels : List<String>
    }
-
 
    class Definition {
        +uri : String
@@ -19,29 +49,14 @@ classDiagram
        +label : String
        +type : String
        +text : String
-       +geographicScope : String
-       +country : String
    }
-
 
    class Source {
        +uri : String
        +name : String
-       +organization : String
-       +country : String
        +year : Integer
        +url : String
-       +geographicScope : String
    }
-
-
-   class GeographicZone {
-     +uri : String
-     +name : String
-   }
-
-
-
 
    class TechnicalCriteria {
        +uri : String
@@ -55,11 +70,24 @@ classDiagram
        +minWidthSI : Float
    }
 
+   %% Hierarchy
+   GeospatialContext <|-- Country
+   GeospatialContext <|-- ClimateRegion
+   GeospatialContext <|-- Ecoregion
 
+   %% Core relationships
    Concept "1" --> "0..*" Definition : HAS_DEFINITION
-   Concept "0..*" --> "0..*" Concept : AFFECTS / PART_OF / RELATED_TO / OPPOSITE_OF / MANAGES / MEASURES / DERIVED_FROM / SYNONYM_OF
-   Definition "0..*" --> "1" Source : PROVIDED_BY
-   Definition "0..1" --> "0..1" GeographicZone : APPLIES_TO
+   Concept "0..*" --> "0..*" Concept : AFFECTS/PART_OF/RELATED_TO/etc.
+   
+   %% Definition to contexts (flexible)
+   Definition "0..*" --> "0..*" GeospatialContext : APPLIES_IN
+   
+   %% Authorship & sourcing
+   Definition "0..*" --> "0..1" Source : PROVIDED_BY
+   Source "0..1" --> "1" Organization : PUBLISHED_BY
+   Definition "0..*" --> "0..*" Organization : AUTHORED_BY
+   
+   %% Criteria
    Definition "1" --> "0..1" TechnicalCriteria : QUANTIFIED_BY
 ```
 

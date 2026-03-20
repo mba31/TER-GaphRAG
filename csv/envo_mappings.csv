@@ -1,0 +1,17 @@
+local_concept,envo_id,match_type,confidence,source
+Afforestation,00000066,exactMatch,high,manual-curation
+Deforestation,ENVO_02500012,exactMatch,high,auto-ols4
+Degradation,ENVO_02500001,closeMatch,medium,auto-ols4
+Forest,ENVO_00000111,closeMatch,medium,auto-ols4
+Forestry,ENVO_01001432,exactMatch,high,auto-ols4
+Grove,ENVO_00000118,closeMatch,medium,auto-ols4
+Non-forest,ENVO_01000399,closeMatch,medium,auto-ols4
+Other wooded land,ENVO_03000132,closeMatch,medium,auto-ols4
+Reforestation,ENVO_02500013,exactMatch,high,auto-ols4
+Regeneration,ENVO_01000337,closeMatch,medium,auto-ols4
+Stand,ENVO_00000109,closeMatch,medium,auto-ols4
+Stocking,ENVO_01000906,closeMatch,medium,auto-ols4
+Thicket,ENVO_00000109,closeMatch,medium,auto-ols4
+Timber,ENVO_01001223,closeMatch,medium,auto-ols4
+Tree,ENVO_01000957,closeMatch,medium,auto-ols4
+Woodland,ENVO_00000057,closeMatch,medium,auto-ols4

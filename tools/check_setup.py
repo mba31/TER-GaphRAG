@@ -9,6 +9,18 @@ Run this before starting the extraction pipeline.
 import sys
 from pathlib import Path
 
+# Import project config
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import config
+
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+
+def project_path(relative_path: str) -> Path:
+    """Build absolute path from project root."""
+    return PROJECT_ROOT / relative_path
+
 
 def check_python_version():
     """Check if Python version is adequate."""
@@ -68,7 +80,7 @@ def check_file_structure():
     
     all_exist = True
     for dir_path in required_dirs:
-        path = Path(dir_path)
+        path = project_path(dir_path)
         if path.exists():
             print(f"   [OK] {dir_path}/")
         else:
@@ -82,15 +94,16 @@ def check_source_document():
     """Check if source document exists."""
     print("\n[*] Checking source document...")
     
-    doc_path = Path("docs/sources/forest_definitions.docx")
+    doc_rel_path = "docs/sources/forest_definitions.docx"
+    doc_path = project_path(doc_rel_path)
     
     if doc_path.exists():
         size_mb = doc_path.stat().st_size / (1024 * 1024)
-        print(f"   [OK] Found: {doc_path}")
+        print(f"   [OK] Found: {doc_rel_path}")
         print(f"      Size: {size_mb:.2f} MB")
         return True
     else:
-        print(f"   [WARN] Not found: {doc_path}")
+        print(f"   [WARN] Not found: {doc_rel_path}")
         print(f"      Place your document there before extraction")
         return False
 
@@ -107,7 +120,7 @@ def check_scripts():
     
     all_exist = True
     for script in scripts:
-        path = Path(script)
+        path = project_path(script)
         if path.exists():
             print(f"   [OK] {script}")
         else:
@@ -158,7 +171,7 @@ def check_existing_outputs():
     
     found = []
     for path, description in outputs.items():
-        if Path(path).exists():
+        if project_path(path).exists():
             print(f"   [INFO] Found: {description} ({path})")
             found.append(path)
     
@@ -168,6 +181,47 @@ def check_existing_outputs():
         print(f"   [WARN] {len(found)} output(s) exist - will be overwritten")
     
     return True
+
+
+def check_envo_setup():
+    """Check ENVO integration setup (config + mapping file + optional RDF hints)."""
+    print("\n[*] Checking ENVO integration...")
+
+    ok = True
+
+    # Config flag
+    if getattr(config, "ENABLE_ENVO_MAPPINGS", False):
+        print("   [OK] ENABLE_ENVO_MAPPINGS is enabled")
+    else:
+        print("   [WARN] ENABLE_ENVO_MAPPINGS is disabled")
+        ok = False
+
+    # Mapping file presence
+    mappings_rel = str(config.ENVO_MAPPINGS_CSV.relative_to(PROJECT_ROOT))
+    mappings_path = Path(config.ENVO_MAPPINGS_CSV)
+    if mappings_path.exists():
+        print(f"   [OK] Found ENVO mappings file: {mappings_rel}")
+    else:
+        print(f"   [WARN] Missing ENVO mappings file: {mappings_rel}")
+        ok = False
+
+    # Optional: quick RDF validation if output exists
+    rdf_path = Path(config.RDF_OUTPUT)
+    rdf_rel = str(rdf_path.relative_to(PROJECT_ROOT))
+    if rdf_path.exists():
+        try:
+            with open(rdf_path, "r", encoding="utf-8") as f:
+                head = "".join([next(f) for _ in range(80)])
+            if "@prefix envo:" in head or "ENVO_" in head:
+                print(f"   [OK] RDF appears ENVO-aware: {rdf_rel}")
+            else:
+                print(f"   [INFO] RDF exists but no ENVO prefix detected in header: {rdf_rel}")
+        except (OSError, StopIteration):
+            print(f"   [INFO] Could not inspect RDF header: {rdf_rel}")
+    else:
+        print(f"   [INFO] RDF not generated yet: {rdf_rel}")
+
+    return ok
 
 
 def print_summary(results):
@@ -203,6 +257,7 @@ def main():
     print("=" * 60)
     print("TER2026 Setup Checker")
     print("=" * 60)
+    print(f"[*] Project root: {PROJECT_ROOT}")
     
     results = {
         'python_version': check_python_version(),
@@ -211,7 +266,8 @@ def main():
         'source_document': check_source_document(),
         'scripts': check_scripts(),
         'neo4j': check_neo4j(),
-        'existing_outputs': check_existing_outputs()
+        'existing_outputs': check_existing_outputs(),
+        'envo_setup': check_envo_setup()
     }
     
     print_summary(results)

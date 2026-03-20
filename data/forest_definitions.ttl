@@ -1,11 +1,10 @@
+@prefix envo: <http://purl.obolibrary.org/obo/ENVO_> .
 @prefix ex: <http://ter2026-project.org/forest#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix envo: <http://purl.obolibrary.org/obo/ENVO_> .
 
 ex:Afforestation a skos:Concept ;
-    skos:exactMatch envo:00000066 ;
     ex:affects ex:Forest ;
     skos:definition ex:Def_def_bul_unknown_745,
         ex:Def_def_can_unknown_737,
@@ -38,6 +37,7 @@ ex:Afforestation a skos:Concept ;
         ex:Def_def_unk_unknown_747,
         ex:Def_def_unk_unknown_748,
         ex:Def_def_zam_2015_735 ;
+    skos:exactMatch envo:00000066 ;
     skos:prefLabel "Afforestation"@en .
 
 ex:Deforestation a skos:Concept ;
@@ -74,10 +74,12 @@ ex:Deforestation a skos:Concept ;
         ex:Def_def_unk_unknown_716,
         ex:Def_def_unk_unknown_717,
         ex:Def_def_usa_unknown_694 ;
+    skos:exactMatch envo:02500012 ;
     skos:prefLabel "Deforestation"@en .
 
 ex:Degradation a skos:Concept ;
     ex:affects ex:Forest ;
+    skos:closeMatch envo:02500001 ;
     skos:definition ex:Def_def_chi_1931_1340,
         ex:Def_def_ind_unknown_1348,
         ex:Def_def_jap_1996_1337,
@@ -286,10 +288,12 @@ ex:Forestry a skos:Concept ;
         ex:Def_def_usa_unknown_1539,
         ex:Def_def_usa_unknown_1541,
         ex:Def_def_vie_1998_1496 ;
+    skos:exactMatch envo:01001432 ;
     skos:prefLabel "Forestry"@en .
 
 ex:Grove a skos:Concept ;
     ex:partOf ex:Forest ;
+    skos:closeMatch envo:00000118 ;
     skos:definition ex:Def_def_fra_2011_1688,
         ex:Def_def_mad_unknown_1689,
         ex:Def_def_swi_1991_1690,
@@ -303,6 +307,7 @@ ex:Grove a skos:Concept ;
 
 ex:Non-forest a skos:Concept ;
     ex:oppositeOf ex:Forest ;
+    skos:closeMatch envo:01000399 ;
     skos:definition ex:Def_def_can_unknown_1807,
         ex:Def_def_cze_unknown_1794,
         ex:Def_def_fij_unknown_1805,
@@ -324,6 +329,7 @@ ex:Non-forest a skos:Concept ;
 
 ex:Otherwoodedland a skos:Concept ;
     ex:relatedTo ex:Forest ;
+    skos:closeMatch envo:03000132 ;
     skos:definition ex:Def_def_aus_1999_1813,
         ex:Def_def_hun_unknown_1809,
         ex:Def_def_unk_2000_1814,
@@ -370,10 +376,12 @@ ex:Reforestation a skos:Concept ;
         ex:Def_def_usa_unknown_776,
         ex:Def_def_usa_unknown_778,
         ex:Def_def_zam_2015_771 ;
+    skos:exactMatch envo:02500013 ;
     skos:prefLabel "Reforestation"@en .
 
 ex:Regeneration a skos:Concept ;
     ex:affects ex:Forest ;
+    skos:closeMatch envo:01000337 ;
     skos:definition ex:Def_def_can_unknown_1436,
         ex:Def_def_gre_2001_1428,
         ex:Def_def_gre_2002_1429,
@@ -394,6 +402,7 @@ ex:Regeneration a skos:Concept ;
 
 ex:Stand a skos:Concept ;
     ex:partOf ex:Forest ;
+    skos:closeMatch envo:00000109 ;
     skos:definition ex:Def_def_aus_1992_1578,
         ex:Def_def_aus_1996_1579,
         ex:Def_def_aus_1998_1580,
@@ -529,6 +538,7 @@ ex:Stand a skos:Concept ;
 
 ex:Stocking a skos:Concept ;
     ex:measures ex:Forest ;
+    skos:closeMatch envo:01000906 ;
     skos:definition ex:Def_def_can_1998_1845,
         ex:Def_def_est_2010_1827,
         ex:Def_def_est_2010_1833,
@@ -571,6 +581,7 @@ ex:Stocking a skos:Concept ;
 
 ex:Thicket a skos:Concept ;
     ex:partOf ex:Forest ;
+    skos:closeMatch envo:00000109 ;
     skos:definition ex:Def_def_fij_1992_1694,
         ex:Def_def_unk_2063_1695,
         ex:Def_def_unk_unknown_1693 ;
@@ -578,6 +589,7 @@ ex:Thicket a skos:Concept ;
 
 ex:Timber a skos:Concept ;
     ex:derivedFrom ex:Tree ;
+    skos:closeMatch envo:01001223 ;
     skos:definition ex:Def_def_aus_unknown_1735,
         ex:Def_def_cam_1994_1717,
         ex:Def_def_cam_2009_1716,
@@ -20905,6 +20917,7 @@ ex:Source_USA-STATE-Nebraska a ex:Source ;
 
 ex:Tree a skos:Concept ;
     ex:partOf ex:Forest ;
+    skos:closeMatch envo:01000957 ;
     skos:definition ex:Def_def_alb_2004_864,
         ex:Def_def_alb_2008_865,
         ex:Def_def_alb_2011_866,
@@ -21396,6 +21409,7 @@ ex:Tree a skos:Concept ;
 
 ex:Woodland a skos:Concept ;
     ex:synonymOf ex:Woods ;
+    skos:closeMatch envo:00000057 ;
     skos:definition ex:Def_def_alb_2008_1282,
         ex:Def_def_alb_unknown_1283,
         ex:Def_def_aus_1992_1285,
@@ -21972,6 +21986,7 @@ ex:Country_Philippines a ex:Country ;
     rdfs:label "Philippines" .
 
 ex:Forest a skos:Concept ;
+    skos:closeMatch envo:00000111 ;
     skos:definition ex:Def_def_alb_2004_155,
         ex:Def_def_alb_2008_156,
         ex:Def_def_alb_2011_157,

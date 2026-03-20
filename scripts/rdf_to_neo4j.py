@@ -50,6 +50,7 @@ class RDFToNeo4jImporter:
         self.SKOS = SKOS
         self.RDF = RDF
         self.RDFS = RDFS
+        self.ENVO = Namespace(config.ENVO_NAMESPACE_URI)
         
         # Statistics
         self.stats = {
@@ -58,7 +59,16 @@ class RDFToNeo4jImporter:
             'sources': 0,
             'countries': 0,
             'criteria': 0,
+            'envo_terms': 0,
+            'envo_links': 0,
             'relationships': 0
+        }
+
+        self.skos_match_to_rel = {
+            SKOS.exactMatch: "EXACT_MATCH",
+            SKOS.closeMatch: "CLOSE_MATCH",
+            SKOS.broadMatch: "BROAD_MATCH",
+            SKOS.narrowMatch: "NARROW_MATCH",
         }
     
     def connect(self):
@@ -134,6 +144,7 @@ class RDFToNeo4jImporter:
                 "CREATE CONSTRAINT definition_uri_unique IF NOT EXISTS FOR (d:Definition) REQUIRE d.uri IS UNIQUE",
                 "CREATE CONSTRAINT source_uri_unique IF NOT EXISTS FOR (s:Source) REQUIRE s.uri IS UNIQUE",
                 "CREATE CONSTRAINT country_uri_unique IF NOT EXISTS FOR (c:Country) REQUIRE c.uri IS UNIQUE",
+                "CREATE CONSTRAINT envo_uri_unique IF NOT EXISTS FOR (e:ENVOTerm) REQUIRE e.uri IS UNIQUE",
             ]
             for constraint in constraints:
                 try:
@@ -522,6 +533,44 @@ class RDFToNeo4jImporter:
                 self.stats['relationships'] += 1
         
         print(f"[OK] Created {self.stats['relationships']} total relationships")
+
+    def import_envo_mappings(self, rdf_graph):
+        """Import ENVO term nodes and mapping relationships from SKOS match predicates."""
+        print("\n[*] Importing ENVO mappings...")
+
+        envo_terms_seen = set()
+
+        with self.driver.session() as session:
+            for predicate, rel_type in self.skos_match_to_rel.items():
+                for concept_uri, envo_uri in rdf_graph.subject_objects(predicate):
+                    concept_uri_str = str(concept_uri)
+                    envo_uri_str = str(envo_uri)
+
+                    if not envo_uri_str.startswith(str(self.ENVO)):
+                        continue
+
+                    envo_id = envo_uri_str.rsplit("ENVO_", 1)[-1] if "ENVO_" in envo_uri_str else envo_uri_str
+
+                    term_query = """
+                    MERGE (e:ENVOTerm {uri: $uri})
+                    ON CREATE SET e.id = $id, e.name = 'ENVO:' + $id
+                    """
+                    session.run(term_query, uri=envo_uri_str, id=envo_id)
+
+                    if envo_uri_str not in envo_terms_seen:
+                        envo_terms_seen.add(envo_uri_str)
+                        self.stats['envo_terms'] += 1
+
+                    rel_query = f"""
+                    MATCH (c:Concept {{uri: $concept_uri}})
+                    MATCH (e:ENVOTerm {{uri: $envo_uri}})
+                    MERGE (c)-[:{rel_type}]->(e)
+                    """
+                    session.run(rel_query, concept_uri=concept_uri_str, envo_uri=envo_uri_str)
+                    self.stats['envo_links'] += 1
+                    self.stats['relationships'] += 1
+
+        print(f"[OK] Imported {self.stats['envo_terms']} ENVO terms and {self.stats['envo_links']} ENVO links")
     
     def print_statistics(self):
         """Print import statistics."""
@@ -533,6 +582,8 @@ class RDFToNeo4jImporter:
         print(f"Sources:             {self.stats['sources']}")
         print(f"Countries:           {self.stats['countries']}")
         print(f"Technical Criteria:  {self.stats['criteria']}")
+        print(f"ENVO Terms:          {self.stats['envo_terms']}")
+        print(f"ENVO Links:          {self.stats['envo_links']}")
         print(f"Relationships:       {self.stats['relationships']}")
         print("=" * 60)
 
@@ -593,6 +644,7 @@ def main():
         importer.import_definitions(rdf_graph)
         importer.import_criteria(rdf_graph)
         importer.import_relationships(rdf_graph)
+        importer.import_envo_mappings(rdf_graph)
         
         # Print statistics
         importer.print_statistics()
