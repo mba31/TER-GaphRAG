@@ -25,8 +25,8 @@ RDF_DIR = PROJECT_ROOT / "data"
 OUTPUTS_DIR = PROJECT_ROOT / "outputs"
 
 # Output files
-CRITERIA_CSV = CSV_DIR / "criteria.csv"
-DEFINITION_CSV = CSV_DIR / "definition.csv"
+DEFINITIONS_CSV = CSV_DIR / "definitions.csv"
+TECHNICAL_CRITERIA_CSV = CSV_DIR / "technical_criteria.csv"
 RDF_OUTPUT = RDF_DIR / "forest_definitions.ttl"
 
 # ==================

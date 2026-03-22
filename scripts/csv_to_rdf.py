@@ -5,8 +5,8 @@ Converts extracted forest definitions from CSV format to RDF/Turtle format
 following the SKOS vocabulary and project ontology.
 
 Input:
-- csv/criteria.csv (main definitions)
-- csv/definition.csv (technical criteria)
+- csv/definitions.csv
+- csv/technical_criteria.csv
 
 Output:
 - data/forest_definitions.ttl (RDF Turtle format)
@@ -195,7 +195,7 @@ class CSVToRDFConverter:
         if missing_concepts:
             print(f"   [WARN] ENVO mappings referencing unknown concepts: {missing_concepts}")
     
-    def load_csv_data(self, criteria_path, definition_path):
+    def load_csv_data(self, definitions_path, technical_criteria_path):
         """
         Load data from CSV files.
         
@@ -204,21 +204,19 @@ class CSVToRDFConverter:
             definition_path: Path to definition.csv
         """
         # Load criteria.csv
-        print(f"[*] Loading {criteria_path}...")
-        with open(criteria_path, 'r', encoding='utf-8') as f:
+        print(f"[*] Loading {definitions_path}...")
+        with open(definitions_path, 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             self.definitions_data = list(reader)
-        
-        print(f"   Found {len(self.definitions_data)} definitions")
-        
-        # Load definition.csv
-        print(f"[*] Loading {definition_path}...")
-        with open(definition_path, 'r', encoding='utf-8') as f:
+
+        print(f"[*] Loading {technical_criteria_path}...")
+        with open(technical_criteria_path, 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             self.criteria_data = list(reader)
         
         print(f"   Found {len(self.criteria_data)} criteria entries")
-    
+        print(f"   Found {len(self.definitions_data)} definitions")
+
     def create_concept(self, label, alt_labels=None):
         """
         Create a SKOS Concept for the main term (e.g., Forest).
@@ -293,6 +291,9 @@ class CSVToRDFConverter:
         if url:
             self.graph.add((source_uri, self.EX.url, Literal(url, datatype=XSD.anyURI)))
         
+        if year:
+            self.graph.add((source_uri, self.EX.year, Literal(year)))
+        
         return source_uri
 
     def create_country(self, country_name):
@@ -315,7 +316,7 @@ class CSVToRDFConverter:
 
         return country_uri
     
-    def create_definition(self, definition_id, text, def_type, source_uri, geographic_scope=None, country=None, country_uri=None):
+    def create_definition(self, definition_id, text, def_type, source_uri, geographic_scope=None, country=None, country_uri=None, region=None, section_main=None, section_sub=None, section_sub_sub=None):
         """
         Create a Definition entity.
         
@@ -332,7 +333,10 @@ class CSVToRDFConverter:
             URIRef for the created definition
         """
         # Create definition URI
-        def_uri = self.EX[f"Def_{definition_id}"]
+        #def_uri = self.EX[f"Def_{definition_id}"]
+
+        safe_definition_id = re.sub(r'[^A-Za-z0-9_-]+', '_', definition_id).strip('_')
+        def_uri = self.EX[f"Def_{safe_definition_id}"]
         
         # Add definition type
         self.graph.add((def_uri, RDF.type, self.EX.Definition))
@@ -363,8 +367,18 @@ class CSVToRDFConverter:
         if country_uri:
             self.graph.add((def_uri, self.EX.appliesTo, country_uri))
         
+        if region:
+            self.graph.add((def_uri, self.EX.region, Literal(region)))
+
         # Add definition text as note
         self.graph.add((def_uri, SKOS.note, Literal(text, lang="en")))
+        
+        if section_main:
+            self.graph.add((def_uri, self.EX.sectionMain, Literal(section_main)))
+        if section_sub:
+            self.graph.add((def_uri, self.EX.sectionSub, Literal(section_sub)))
+        if section_sub_sub:
+            self.graph.add((def_uri, self.EX.sectionSubSub, Literal(section_sub_sub)))
         
         return def_uri
     
@@ -475,18 +489,18 @@ class CSVToRDFConverter:
             # Extract data
             concept_label = row['label']
             definition_id = row['definition_id']
-            alt_labels = [a.strip() for a in row['alt_labels'].split(',') if a.strip()]
+            alt_labels = []   # plus de colonne alt_labels pour l’instant
             def_type = row['definition_type']
-            text = row['texte']
-            organization = row.get('organisation', 'Unknown')
+            text = row['clean_text'] if row.get('clean_text') else row.get('raw_text', '')
+            organization = row.get('organization', 'Unknown')
             country = row.get('country', 'Unknown')
-            year = row['year'] if row['year'] else None
+            region = row.get('region', '')
+            year = row['year'] if row.get('year') else None
             geographic_scope = row.get('geographic_scope', 'National')
-
-            organization = organization.strip() if organization else 'Unknown'
-            country = country.strip() if country else 'Unknown'
-            geographic_scope = geographic_scope.strip() if geographic_scope else 'National'
-
+            source_url = row.get('source_url', '')
+            section_main = row.get('section_main', '')
+            section_sub = row.get('section_sub', '')
+            section_sub_sub = row.get('section_sub_sub', '')
             # Source identity is organization only (country is modeled separately)
             source_name = organization if organization != 'Unknown' else 'Unknown'
             
@@ -503,6 +517,7 @@ class CSVToRDFConverter:
                 source_uri = self.create_source(
                     source_name,
                     year,
+                    url=source_url if source_url else None,
                     organization=organization if organization != 'Unknown' else None,
                     country=None,
                     geographic_scope=geographic_scope
@@ -521,10 +536,12 @@ class CSVToRDFConverter:
             # Create definition
             def_uri = self.create_definition(definition_id, text, def_type, source_uri, geographic_scope, 
                                             country if country != 'Unknown' else None,
-                                            country_uri)
+                                            country_uri, region if region else None, section_main if section_main else None, 
+                                            section_sub if section_sub else None, section_sub_sub if section_sub_sub else None)
             
             # Link concept to definition
-            self.graph.add((concept_uri, SKOS.definition, def_uri))
+            self.graph.add((concept_uri, self.EX.hasDefinition, def_uri))
+            self.graph.add((concept_uri, SKOS.definition, Literal(text, lang="en")))
             
             # Add technical criteria
             if definition_id in criteria_by_def:
@@ -566,9 +583,9 @@ def main():
     """Main execution function."""
     
     # Configuration
-    CRITERIA_CSV = str(config.CRITERIA_CSV)
-    DEFINITION_CSV = str(config.DEFINITION_CSV)
-    OUTPUT_TTL = str(config.RDF_OUTPUT)
+    DEFINITIONS_CSV = str(config.DEFINITIONS_CSV)
+    TECHNICAL_CRITERIA_CSV = str(config.TECHNICAL_CRITERIA_CSV)
+    OUTPUT_TTL = str(config.RDF_OUTPUT) 
     ENVO_MAPPINGS_CSV = str(config.ENVO_MAPPINGS_CSV)
     
     print("=" * 60)
@@ -576,13 +593,13 @@ def main():
     print("=" * 60)
     
     # Check if input files exist
-    if not Path(CRITERIA_CSV).exists():
-        print(f"[ERROR] Error: {CRITERIA_CSV} not found")
+    if not Path(DEFINITIONS_CSV).exists():
+        print(f"[ERROR] Error: {DEFINITIONS_CSV} not found")
         print("Please run extract_definitions.py first to generate CSV files")
         return
     
-    if not Path(DEFINITION_CSV).exists():
-        print(f"[ERROR] Error: {DEFINITION_CSV} not found")
+    if not Path(TECHNICAL_CRITERIA_CSV).exists():
+        print(f"[ERROR] Error: {TECHNICAL_CRITERIA_CSV} not found")
         print("Please run extract_definitions.py first to generate CSV files")
         return
     
@@ -590,7 +607,7 @@ def main():
     converter = CSVToRDFConverter()
     
     # Load CSV data
-    converter.load_csv_data(CRITERIA_CSV, DEFINITION_CSV)
+    converter.load_csv_data(DEFINITIONS_CSV, TECHNICAL_CRITERIA_CSV)
 
     # Load ENVO mappings (optional)
     converter.load_envo_mappings(ENVO_MAPPINGS_CSV)

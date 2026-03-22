@@ -313,13 +313,25 @@ class RDFToNeo4jImporter:
                 sources = list(rdf_graph.objects(def_uri, self.EX.hasSource))
                 geographic_scopes = list(rdf_graph.objects(def_uri, self.EX.geographicScope))
                 countries = list(rdf_graph.objects(def_uri, self.EX.country))
-                
+                regions = list(rdf_graph.objects(def_uri, self.EX.region))
+
+
+                section_mains = list(rdf_graph.objects(def_uri, self.EX.sectionMain))
+                section_subs = list(rdf_graph.objects(def_uri, self.EX.sectionSub))
+                section_sub_subs = list(rdf_graph.objects(def_uri, self.EX.sectionSubSub))
+
                 label = self.get_literal_value(labels[0]) if labels else "Unknown"
                 def_type = self.get_literal_value(types[0]) if types else "Unknown"
                 note = self.get_literal_value(notes[0]) if notes else ""
                 geographic_scope = self.get_literal_value(geographic_scopes[0]) if geographic_scopes else None
                 country = self.get_literal_value(countries[0]) if countries else None
-                
+                region = self.get_literal_value(regions[0]) if regions else None
+
+                section_main = self.get_literal_value(section_mains[0]) if section_mains else None
+                section_sub = self.get_literal_value(section_subs[0]) if section_subs else None
+                section_sub_sub = self.get_literal_value(section_sub_subs[0]) if section_sub_subs else None
+
+
                 # Create Definition node
                 query = """
                 CREATE (d:Definition {
@@ -330,12 +342,18 @@ class RDFToNeo4jImporter:
                     type: $type,
                     text: $text,
                     geographicScope: $geographic_scope,
-                    country: $country
+                    country: $country,
+                    region: $region,
+                    sectionMain: $section_main,
+                    sectionSub: $section_sub,
+                    sectionSubSub: $section_sub_sub
                 })
                 """
-                def_id = uri_str.split('_')[-1] if '_' in uri_str else uri_str
+                #def_id = uri_str.split('_')[-1] if '_' in uri_str else uri_str
+                def_id = uri_str.split('#')[-1] 
                 session.run(query, uri=uri_str, id=def_id, label=label, type=def_type, text=note, 
-                          geographic_scope=geographic_scope, country=country)
+                          geographic_scope=geographic_scope, country=country, region=region,
+                          section_main=section_main, section_sub=section_sub, section_sub_sub=section_sub_sub)
                 self.stats['definitions'] += 1
                 
                 # Create relationship to Source
@@ -433,7 +451,7 @@ class RDFToNeo4jImporter:
         
         with self.driver.session() as session:
             # Link Concepts to Definitions
-            for concept_uri, def_uri in rdf_graph.subject_objects(SKOS.definition):
+            for concept_uri, def_uri in rdf_graph.subject_objects(self.EX.hasDefinition):
                 query = """
                 MATCH (c:Concept {uri: $concept_uri})
                 MATCH (d:Definition {uri: $def_uri})
