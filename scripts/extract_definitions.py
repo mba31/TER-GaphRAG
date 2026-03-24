@@ -81,6 +81,13 @@ class ForestDefinitionExtractor:
             "Tajikistan", "Turkmenistan", "Mongolia", "North Korea", "South Korea"
         ]
         
+        # Regions / subnational examples
+        self.regions = [
+            "Tasmania", "California", "Quebec", "Europe", "Africa",
+            "Asia", "Latin America", "North America", "South America",
+            "Oceania"
+        ]
+
         # Concepts to extract
         self.concepts = [
             "forest", "deforestation", "afforestation", 
@@ -99,6 +106,15 @@ class ForestDefinitionExtractor:
         
         # Storage for extracted definitions
         self.definitions = []
+
+
+         # Section context
+        self.current_main_section = None
+        self.current_sub_section = None
+        self.current_sub_sub_section = None
+        self.current_concept = None
+        self.current_scope = None
+        self.current_definition_type = None
 
     def _load_document(self, doc_path):
         """Load document paragraphs from DOCX or via Docling."""
@@ -199,6 +215,77 @@ class ForestDefinitionExtractor:
                 msg += f" | '{excerpt_short}...'"
             self.error_logger.warning(msg)
 
+#-----------------------------------
+
+    def is_section_heading(self, text):
+        """Detect headings like 2.3 FOREST or 2.3.3 National definitions."""
+        return bool(re.match(r"^\d+(\.\d+)*[A-Za-z]?\s+", text))
+
+    def update_context_from_heading(self, text):
+        """Update current section context from heading text."""
+        text_lower = text.lower()
+
+        if re.match(r"^\d+(\.\d+)*\s+", text):
+            level = text.count(".")
+            if level <= 1:
+                self.current_main_section = text
+            elif level == 2:
+                self.current_sub_section = text
+            else:
+                self.current_sub_sub_section = text
+
+        # Concept detection from headings
+        heading_concept_map = {
+            "forest/forest land": "forest",
+            "tree": "tree",
+            "woods, woodland, other wooded lands": "woodland",
+            "deforestation": "deforestation",
+            "afforestation": "afforestation",
+            "reforestation": "reforestation",
+            "degradation": "degradation",
+            "forestation": "forestation",
+            "regeneration": "regeneration",
+            "forestry": "forestry",
+            "stand": "stand",
+            "grove": "grove",
+            "thicket": "thicket",
+            "timber": "timber",
+            "land use": "land use",
+            "land cover": "land cover",
+            "stocking": "stocking",
+            "non-forest": "non-forest",
+        }
+
+        for key, value in heading_concept_map.items():
+            if key in text_lower:
+                self.current_concept = value
+                break
+
+        # Scope from headings
+        if "international definitions" in text_lower:
+            self.current_scope = "International"
+        elif "national definitions" in text_lower:
+            self.current_scope = "National"
+        elif "state, province and local definitions" in text_lower:
+            self.current_scope = "Local/State"
+
+        # Type from headings
+        if "land cover type" in text_lower:
+            self.current_definition_type = "Land Cover"
+        elif "land use type" in text_lower:
+            self.current_definition_type = "Land Use"
+        elif "declared, legal, or administrative unit" in text_lower:
+            self.current_definition_type = "Administrative"
+        elif "ecological/miscellaneous definitions" in text_lower:
+            self.current_definition_type = "Ecological/Miscellaneous"
+
+
+#---------------------------
+
+
+    def extract_url(self, text):
+        match = re.search(r"https?://\S+|www\.\S+", text)
+        return match.group(0).rstrip(").,;") if match else None
 
 
     def detect_country(self, text):
@@ -213,6 +300,7 @@ class ForestDefinitionExtractor:
             r'\bEU\b': 'European Union'
         }
 
+        
         org_markers = [
             'fao', 'un-fao', 'unfao', 'unfccc', 'un-fccc', 'unep', 'un-ep',
             'ipcc', 'united nations', 'usda', 'forest information services',
@@ -265,6 +353,21 @@ class ForestDefinitionExtractor:
         match = re.match(r'\(([^)]+?)\s+(?:18|19|20)\d{2}\)', text)
         if match:
             return normalize_country_candidate(match.group(1))
+
+        return None
+
+    def detect_region(self, text):
+        for region in sorted(self.regions, key=len, reverse=True):
+            if re.search(rf"\b{re.escape(region)}\b", text, re.IGNORECASE):
+                return region
+
+        # Special case: (Australia – Tasmania 2003)
+        match = re.match(r"^\(([^)]+)\)", text)
+        if match:
+            tag = match.group(1)
+            for region in sorted(self.regions, key=len, reverse=True):
+                if re.search(rf"\b{re.escape(region)}\b", tag, re.IGNORECASE):
+                    return region
 
         return None
 
@@ -414,6 +517,20 @@ class ForestDefinitionExtractor:
                     break
 
         return detected_country, detected_org
+
+    def clean_definition_text(self, text):
+        """Remove source tag and URL, keep core definition text."""
+        cleaned = text
+
+        # Remove leading source tag
+        cleaned = re.sub(r"^\([^)]+\)\s*[-–:]?\s*", "", cleaned)
+
+        # Remove URLs
+        cleaned = re.sub(r"https?://\S+|www\.\S+", "", cleaned)
+
+        # Remove extra spaces
+        cleaned = re.sub(r"\s+", " ", cleaned).strip(" -–:;,.")
+        return cleaned
     
     def detect_geographic_scope(self, text, organization):
         """
@@ -426,6 +543,10 @@ class ForestDefinitionExtractor:
         Returns:
             Geographic scope as string
         """
+
+        if self.current_scope:
+            return self.current_scope
+
         text_lower = text.lower()
         org_lower = organization.lower() if organization and organization != 'Unknown' else ''
         
@@ -504,7 +625,7 @@ class ForestDefinitionExtractor:
             if match:
                 value = float(match.group(1))
                 criteria['min_canopy_cover'] = value
-                criteria['canopy_unit'] = 'percent'
+                criteria['canopy_cover_unit'] = 'percent'
                 # Already in percent (standard unit)
                 criteria['min_canopy_cover_si'] = value
                 break
@@ -560,6 +681,10 @@ class ForestDefinitionExtractor:
         Returns:
             Definition type as string
         """
+
+        if self.current_definition_type:
+            return self.current_definition_type
+
         text_lower = text.lower()
         
         if 'land use' in text_lower:
@@ -575,20 +700,60 @@ class ForestDefinitionExtractor:
             if 'canopy' in text_lower or 'crown' in text_lower:
                 return 'Land Cover'
             return 'Land Use'
+
+
+    def is_noise_paragraph(self, text):
+        """Filter obvious non-definition content."""
+        clean = text.strip()
+
+        if not clean:
+            return True
+
+        if len(clean) < 12:
+            return True
+
+        # Table of contents style lines
+        if re.match(r"^\d+(\.\d+)*\s+.*\s+\d+$", clean):
+            return True
+
+        # Pure uppercase short headings
+        if clean.isupper() and len(clean.split()) <= 6:
+            return True
+
+        # Language table-ish lines
+        if len(clean.split()) <= 3 and not any(k in clean.lower() for k in self.definition_keywords):
+            return True
+
+        return False
     
-    def extract_definitions(self, concept="forest"):
+    def is_definition_paragraph(self, text, concept):
+        if not concept:
+            return False
+
+        text_lower = text.lower()
+
+        # Cas 1: contient le concept
+        if concept in text_lower:
+            return True
+
+        # Cas 2: commence par une source (ex: (FAO 2000))
+        if re.match(r"^\([^)]+\)", text):
+            return True
+
+        return False
+
+
+
+    def extract_definitions(self):
         """
-        Extract all definitions for a given concept.
-        
-        Args:
-            concept: Concept to extract (default: "forest")
-            
+        Extract all definitions using section context.
+
         Returns:
             List of extracted definitions
         """
         definitions = []
         
-        print(f"[*] Extracting {concept} definitions...")
+        print("[*] Extracting definitions with section context...")
         print(f"[*] Processing {len(self.doc.paragraphs)} paragraphs...")
         
         for para_idx, para in enumerate(self.doc.paragraphs, 1):
@@ -601,65 +766,111 @@ class ForestDefinitionExtractor:
                 self.stats['skipped_paragraphs'] += 1
                 continue
             
-            text_lower = text.lower()
-            
-            # Check if paragraph contains the concept
-            if concept.lower() not in text_lower:
-                self.audit_paragraph(para_idx, text, "SKIP", f"No '{concept}' keyword")
-                self.stats['skipped_paragraphs'] += 1
+            if self.is_section_heading(text):
+                self.update_context_from_heading(text)
+                self.audit_paragraph(para_idx, text, "HEADING", f"Concept={self.current_concept}, Scope={self.current_scope}, Type={self.current_definition_type}")
                 continue
-            
-            # Check if it contains definition keywords
-            has_definition_keyword = any(
-                keyword in text_lower 
-                for keyword in self.definition_keywords
-            )
-            
-            if not has_definition_keyword:
-                self.audit_paragraph(para_idx, text, "SKIP", "No definition keywords")
-                self.stats['skipped_paragraphs'] += 1
+
+            if self.is_noise_paragraph(text):
+                self.audit_paragraph(para_idx, text, "SKIP", "Noise paragraph")
+                self.stats["skipped_paragraphs"] += 1
+                continue
+
+            if not self.current_concept:
+                self.audit_paragraph(para_idx, text, "SKIP", "No current concept")
+                self.stats["skipped_paragraphs"] += 1
+                continue
+
+            if not self.is_definition_paragraph(text, self.current_concept):
+                self.audit_paragraph(para_idx, text, "SKIP", "Not recognized as definition")
+                self.stats["skipped_paragraphs"] += 1
                 continue
             
             try:
                 # Extract source metadata (parenthetical source tag has priority)
                 tag_country, tag_organization = self.parse_parenthetical_source_tag(text)
                 detected_country = tag_country or self.detect_country(text)
+                detected_region = self.detect_region(text)
                 detected_organization = tag_organization or self.detect_organization(text)
 
                 # Extract metadata
                 year = self.extract_year(text)
+                source_url = self.extract_url(text)
+                clean_text = self.clean_definition_text(text)
                 criteria = self.extract_criteria(text)
                 def_type = self.determine_definition_type(text)
                 geographic_scope = self.detect_geographic_scope(text, detected_organization)
 
                 definition = {
-                    'concept': concept.capitalize(),
-                    'country': detected_country or 'Unknown',
-                    'organization': detected_organization or 'Unknown',
-                    'year': year,
-                    'definition_type': def_type,
-                    'geographic_scope': geographic_scope,
-                    'text': text,
-                    'criteria': criteria
+                    "concept": self.current_concept.capitalize(),
+                    "country": detected_country or "",
+                    "region": detected_region or "",
+                    "organization": detected_organization or "",
+                    "year": year or "",
+                    "definition_type": def_type,
+                    "geographic_scope": geographic_scope,
+                    "source_url": source_url or "",
+                    "raw_text": text,
+                    "clean_text": clean_text,
+                    "criteria": criteria,
+                    "section_main": self.current_main_section or "",
+                    "section_sub": self.current_sub_section or "",
+                    "section_sub_sub": self.current_sub_sub_section or "",
                 }
 
+                # Filtre qualité final
+                if len(clean_text) < 30:
+                    continue
+
+                # Éliminer références bibliographiques
+                if re.match(r'^[A-Z][a-z]+,\s+[A-Z]\.', clean_text):
+                    continue
+
+                # Éliminer lignes avec années + auteurs
+                if re.match(r'.*\d{4}.*', clean_text) and ',' in clean_text and len(clean_text) < 120:
+                    continue
+
+                # Éliminer titres
+                if clean_text.isupper():
+                    continue
+
+                # Vérifier que ça ressemble à une définition
+                definition_indicators = [
+                    "is", "refers to", "means", "defined as",
+                    "consists of", "is a", "are", "corresponds to"
+                ]
+
+                if not any(ind in clean_text.lower() for ind in definition_indicators):
+                    continue
                 definitions.append(definition)
+
                 self.stats['definitions_extracted'] += 1
 
                 # Log successful extraction
-                details = f"Country: {detected_country or 'Unknown'} | Org: {detected_organization or 'Unknown'}"
+                details =  (
+                    f"Concept={definition['concept']} | "
+                    f"Country={definition['country'] or 'Unknown'} | "
+                    f"Region={definition['region'] or 'Unknown'} | "
+                    f"Org={definition['organization'] or 'Unknown'}"
+                )
                 self.audit_paragraph(para_idx, text, "EXTRACTED", details)
+
             except Exception as err:
                 self.stats['extraction_errors'] += 1
                 self.audit_error(para_idx, f"Extraction error: {err}", text)
         
-        print(f"[OK] Found {len(definitions)} {concept} definitions")
+        print(f"[OK] Found {len(definitions)} definitions")
         print(f"[*] Extraction summary:")
         print(f"    - Paragraphs processed: {self.stats['paragraphs_processed']}")
         print(f"    - Definitions extracted: {self.stats['definitions_extracted']}")
         print(f"    - Paragraphs skipped: {self.stats['skipped_paragraphs']}")
-        
+        print(f"    - Extraction errors: {self.stats['extraction_errors']}")
+
         return definitions
+
+    # ----------------------------
+    # EXPORT
+    # ----------------------------
 
     def export_to_csv(self, definitions, output_dir="csv"):
         """
@@ -672,58 +883,79 @@ class ForestDefinitionExtractor:
         output_path = Path(output_dir)
         output_path.mkdir(exist_ok=True)
         
-        # Export to criteria.csv (main definitions)
-        criteria_file = output_path / "criteria.csv"
-        with open(criteria_file, 'w', newline='', encoding='utf-8') as f:
+        definitions_file = output_path / "definitions.csv"
+        with open(definitions_file, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
             writer.writerow([
-                'concept_id', 'definition_id', 'label', 'alt_labels', 
-                'definition_type', 'texte', 'organisation', 'country', 'year', 'geographic_scope'
+                "concept_id",
+                "definition_id",
+                "label",
+                "definition_type",
+                "organization",
+                "country",
+                "region",
+                "year",
+                "geographic_scope",
+                "source_url",
+                "section_main",
+                "section_sub",
+                "section_sub_sub",
+                "raw_text",
+                "clean_text",
             ])
-            
+
             for idx, item in enumerate(definitions):
-                concept_id = f"{item['concept'].lower()}_{idx:03d}"
-                country_code = item['country'][:3].lower() if item['country'] != 'Unknown' else 'unk'
-                year_code = item['year'] if item['year'] else 'unknown'
+                concept_id = f"{item['concept'].lower().replace(' ', '_')}"
+                country_code = item["country"][:3].lower() if item["country"] else "unk"
+                year_code = item["year"] if item["year"] else "unknown"
                 definition_id = f"def_{country_code}_{year_code}_{idx}"
-                
+
                 writer.writerow([
                     concept_id,
                     definition_id,
-                    item['concept'],
-                    '',  # alt_labels (to be filled manually)
-                    item['definition_type'],
-                    item['text'],
-                    item['organization'],
-                    item['country'],
-                    item['year'] or '',
-                    item['geographic_scope']
+                    item["concept"],
+                    item["definition_type"],
+                    item["organization"],
+                    item["country"],
+                    item["region"],
+                    item["year"],
+                    item["geographic_scope"],
+                    item["source_url"],
+                    item["section_main"],
+                    item["section_sub"],
+                    item["section_sub_sub"],
+                    item["raw_text"],
+                    item["clean_text"],
                 ])
-        
-        print(f"[OK] Exported to {criteria_file}")
-        
-        # Export to definition.csv (technical criteria)
-        definition_file = output_path / "definition.csv"
-        with open(definition_file, 'w', newline='', encoding='utf-8') as f:
+
+        print(f"[OK] Exported to {definitions_file}")
+
+        criteria_file = output_path / "technical_criteria.csv"
+        with open(criteria_file, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
-            writer.writerow(['definition_id', 'criteria_name', 'value', 'unit', 'value_si'])
-            
+            writer.writerow([
+                "definition_id",
+                "criteria_name",
+                "value",
+                "unit",
+                "value_si"
+            ])
+
             for idx, item in enumerate(definitions):
-                country_code = item['country'][:3].lower() if item['country'] != 'Unknown' else 'unk'
-                year_code = item['year'] if item['year'] else 'unknown'
+                country_code = item["country"][:3].lower() if item["country"] else "unk"
+                year_code = item["year"] if item["year"] else "unknown"
                 definition_id = f"def_{country_code}_{year_code}_{idx}"
-                
-                # Write each criterion as a separate row
-                for criterion_name, value in item['criteria'].items():
-                    if '_unit' in criterion_name or '_si' in criterion_name:
-                        continue  # Skip unit and SI entries (handled separately)
-                    
-                    # Get corresponding unit and SI value
-                    unit_key = f"{criterion_name.replace('min_', '')}_unit"
-                    unit = item['criteria'].get(unit_key, '')
-                    si_key = f"{criterion_name}_si"
-                    value_si = item['criteria'].get(si_key, '')
-                    
+
+                for criterion_name, value in item["criteria"].items():
+                    if criterion_name.endswith("_unit") or criterion_name.endswith("_si"):
+                        continue
+
+                    unit_key = criterion_name.replace("min_", "") + "_unit"
+                    unit = item["criteria"].get(unit_key, "")
+
+                    si_key = criterion_name + "_si"
+                    value_si = item["criteria"].get(si_key, "")
+
                     writer.writerow([
                         definition_id,
                         criterion_name,
@@ -731,12 +963,12 @@ class ForestDefinitionExtractor:
                         unit,
                         value_si
                     ])
-        
-        print(f"[OK] Exported to {definition_file}")
+
+        print(f"[OK] Exported to {criteria_file}")
+
 
 
 def main():
-    """Main execution function."""
     parser = argparse.ArgumentParser(description="Extract forest definitions from source documents")
     parser.add_argument(
         "--doc-path",
@@ -746,52 +978,36 @@ def main():
     parser.add_argument(
         "--use-docling",
         action="store_true",
-        help="Use Docling for document parsing (supports PDF and more formats)",
+        help="Use Docling for document parsing",
+    )
+    parser.add_argument(
+        "--output-dir",
+        default="csv",
+        help="Directory for CSV output",
     )
     args = parser.parse_args()
     
-    # Configuration
-    DOC_PATH = args.doc_path
-    OUTPUT_DIR = "csv"
-    CONCEPTS = [
-        "forest", "deforestation", "afforestation", "reforestation", "tree",
-        "woodland", "degradation", "forestation", "regeneration", "forestry",
-        "stand", "grove", "thicket", "timber", "non-forest",
-        "other wooded land", "woods", "stocking"
-    ]
-    
     print("=" * 60)
-    print("Forest Definitions Extractor - Version 3")
+    print("Forest Definitions Extractor - Version 4")
     print("=" * 60)
     print()
-    
-    # Check if document exists
-    if not Path(DOC_PATH).exists():
-        print(f"[ERROR] Document not found at {DOC_PATH}")
-        print(f"Please place your document in the docs/sources/ folder")
-        print(f"Expected file: {DOC_PATH}")
+
+    if not Path(args.doc_path).exists():
+        print(f"[ERROR] Document not found at {args.doc_path}")
         return
-    
-    # Initialize extractor
-    extractor = ForestDefinitionExtractor(DOC_PATH, use_docling=args.use_docling)
-    
-    # Extract definitions for each concept
-    all_definitions = []
-    for concept in CONCEPTS:
-        definitions = extractor.extract_definitions(concept)
-        all_definitions.extend(definitions)
-    
-    # Export to CSV
-    if all_definitions:
+
+    extractor = ForestDefinitionExtractor(args.doc_path, use_docling=args.use_docling)
+    definitions = extractor.extract_definitions()
+
+    if definitions:
+        print()        
+        print(f"[*] Total definitions extracted: {len(definitions)}")
         print()
-        print(f"[*] Total definitions extracted: {len(all_definitions)}")
-        print()
-        extractor.export_to_csv(all_definitions, OUTPUT_DIR)
+        extractor.export_to_csv(definitions, args.output_dir)
         print()
         print("[OK] Extraction complete!")
-        print(f"[*] Check {OUTPUT_DIR}/ for output files")
     else:
-        print("[WARN] No definitions found. Check your document and configuration.")
+        print("[WARN] No definitions found. Check the document and patterns.")
 
 
 if __name__ == "__main__":

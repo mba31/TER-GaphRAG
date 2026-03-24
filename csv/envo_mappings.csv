@@ -1,5 +1,5 @@
 local_concept,envo_id,match_type,confidence,source
-Afforestation,00000066,exactMatch,high,manual-curation
+Afforestation,ENVO_00000066,exactMatch,high,auto-ols4
 Deforestation,ENVO_02500012,exactMatch,high,auto-ols4
 Degradation,ENVO_02500001,closeMatch,medium,auto-ols4
 Forest,ENVO_00000111,closeMatch,medium,auto-ols4
