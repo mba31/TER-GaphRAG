@@ -25,7 +25,7 @@ class Source {
 
 class GeographicZone {
   +String uri
-  +String geoZoneName
+  +String ame
 }
 
 class Country {
