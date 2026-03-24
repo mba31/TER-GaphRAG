@@ -19,28 +19,18 @@ class Definition {
 class Source {
   +String uri
   +String name
-  +Organization organization
-  +Country country
   +Integer year
   +List<String> url
 }
 
 class GeographicZone {
   +String uri
-  +String name
-  +Shape geometry
+  +String ame
 }
 
 class Country {
-  +String uri
-  +String countryName
-  +String capital
-  +List oficialLanguages
-}
-
-class Region {
-  +String uri
-  +String RegionName
+  +String CountryName
+  +List<Enum> officialLangages 
 }
 
 class Organization {
@@ -64,8 +54,9 @@ Concept "1" --> "0..*" Definition : HAS_DEFINITION
 Source "1" --> "0..*" Definition : PROVIDED_BY
 Definition "0..*" --> "0..*" GeographicZone : APPLIES_TO
 Definition "1" --> "0..*" TechnicalCriteria : QUANTIFIED_BY
-GeographicZone <|-- Country
-GeographicZone <|-- Region
-GeographicZone "0..*" --> "0..*" Organization : IS_MEMBER_OF
-Concept "0..*" --> "0..*" Concept : ConceptRelation
+GeographicZone <|-- Organization
+Organization <|-- Country 
+GeographicZone "0..*" --o Organization : IS_MEMBER_OF
 
+Concept "1" --> "0..*" ConceptRelation : sourceConcept
+ConceptRelation "0..*" --> "1" Concept : targetConcept
