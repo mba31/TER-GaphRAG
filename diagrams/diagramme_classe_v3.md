@@ -23,18 +23,23 @@ class Source {
   +List<String> url
 }
 
-class GeographicZone {
+class GeoZone {
+   <<abstract>>
   +String uri
-  +String ame
+  +Shape geometry
+}
+
+class AtomicGeoZone{
+  +String uri
 }
 
 class Country {
-  +String CountryName
+  +String uri
   +List<Enum> officialLangages 
 }
 
 class Organization {
-  +String OrganizationName
+  +String uri
   +List Members
 }
 
@@ -52,11 +57,12 @@ class ConceptRelation {
 
 Concept "1" --> "0..*" Definition : HAS_DEFINITION
 Source "1" --> "0..*" Definition : PROVIDED_BY
-Definition "0..*" --> "0..*" GeographicZone : APPLIES_TO
+Definition "0..*" --> "0..*" GeoZone : APPLIES_TO
 Definition "1" --> "0..*" TechnicalCriteria : QUANTIFIED_BY
-GeographicZone <|-- Organization
+GeoZone <|-- Organization
 Organization <|-- Country 
-GeographicZone "0..*" --o Organization : IS_MEMBER_OF
+GeoZone "0..*" --o Organization : IS_MEMBER_OF
+AtomicGeoZone --|> GeoZone
 
 Concept "1" --> "0..*" ConceptRelation : sourceConcept
 ConceptRelation "0..*" --> "1" Concept : targetConcept
